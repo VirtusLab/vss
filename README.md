@@ -48,10 +48,23 @@ Stats Service:
 
 ## Solution
 
-gRPC request example:
+### Run VSS demo app:
 
-```bash
-grpcurl -d '{"hashType": "MD5", "password": "somepassword"}' --import-path commons/src/main/protobuf --proto password.proto --plaintext localhost:8181 com.virtuslab.vss.proto.HashPasswordService/HashPassword
+VSS Vanilla
+```
+$ sbt "vss_vanilla/runMain com.virtuslab.vss.vanilla.mainVanilla"
+```
+
+VSS ZIO
+```
+$ sbt "vss_zio/runMain com.virtuslab.vss.zio.MainZIO"
+```
+
+### Use it:
+
+HTTP docs:
+```
+http://localhost:8080/docs/
 ```
 
 HTTP request example:
@@ -65,3 +78,10 @@ curl -X 'POST' \
   "password": "some_password"
 }'
 ```
+
+gRPC request example:
+
+```bash
+grpcurl -d '{"hashType": "MD5", "password": "somepassword"}' --import-path commons/src/main/protobuf --proto password.proto --plaintext localhost:8181 com.virtuslab.vss.proto.HashPasswordService/HashPassword
+```
+
