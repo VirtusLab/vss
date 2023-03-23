@@ -48,3 +48,27 @@ lazy val vss_zio = (project in file("vss-zio"))
     )
   )
   .dependsOn(commons)
+
+val http4sVersion = "0.23.18"
+val fs2Version = "3.6.1"
+val catsEffectVersion = "3.4.8"
+val doobieVersion = "1.0.0-RC2"
+
+lazy val vss_cats = project.in(file("vss-cats"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel"   %% "cats-effect"         % catsEffectVersion,
+      "co.fs2"          %% "fs2-core"            % fs2Version,
+      "org.http4s"      %% "http4s-server"       % http4sVersion,
+      "org.http4s"      %% "http4s-ember-server" % http4sVersion,
+      "org.http4s"      %% "http4s-circe"        % http4sVersion,
+      "org.http4s"      %% "http4s-dsl"          % http4sVersion,
+      "org.tpolecat"    %% "doobie-core"         % doobieVersion,
+      "org.tpolecat"    %% "doobie-postgres"     % doobieVersion,
+      "org.tpolecat"    %% "doobie-hikari"       % doobieVersion,
+      "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
+      "io.grpc" % "grpc-netty-shaded" % scalapb.compiler.Version.grpcJavaVersion
+    )
+  )
+  .dependsOn(commons)
+  .enablePlugins(Fs2Grpc)

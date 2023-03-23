@@ -7,12 +7,12 @@ import upickle.default.*
 
 object HashPasswordHttpEndpoints:
 
-  val hashPasswordEndpoint = sttp.tapir.endpoint.post
+  val hashPasswordEndpoint: Endpoint[Unit, HashPassword, Unit, HashedPassword, Any] = sttp.tapir.endpoint.post
     .in("hash")
-    .in(jsonBody[HashPassword].example(HashPassword("MD5", "password")))
+    .in(jsonBody[HashPassword].example(HashPassword("SHA256", "password")))
     .out(
       jsonBody[HashedPassword]
-        .example(HashedPassword("MD5", "password", "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"))
+        .example(HashedPassword("SHA256", "password", "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"))
     )
 
 case class HashPassword(hashType: String, password: String)
