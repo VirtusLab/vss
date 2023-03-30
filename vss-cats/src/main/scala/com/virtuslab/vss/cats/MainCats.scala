@@ -15,7 +15,7 @@ object MainCats extends IOApp.Simple {
 
   override def run: IO[Unit] =
     val appResources = AppResources.make[IO]()
-    val services = Services.make[IO](appResources.postgres)
+    val services = Services.make[IO](appResources.db)
     val httpApi = HttpApi.make[IO](services)
     val servers = for {
       _ <- CatsHttpServer[IO].newServer(httpApi.httpApp)

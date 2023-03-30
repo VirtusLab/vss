@@ -11,15 +11,15 @@ import doobie.hikari.HikariTransactor
 import org.typelevel.log4cats.Logger
 
 sealed abstract class AppResources[F[_]](
-  val postgres: Resource[F, Transactor[F]]
+  val db: Resource[F, Transactor[F]]
 )
 
 object AppResources {
 
   def make[F[_]: Sync: Async: Logger](): AppResources[F] = {
-    def checkPostgresConnection(transactor: Transactor[F]): F[Unit] =
+    def checkDbConnection(transactor: Transactor[F]): F[Unit] =
       sql"select version();".query[String].unique.transact(transactor).flatMap { v =>
-        Logger[F].info(s"Connected to Postgres $v")
+        Logger[F].info(s"Connected to DB $v")
       }
 
     def postgreSqlResource(): Resource[F, Transactor[F]] =
@@ -34,7 +34,7 @@ object AppResources {
         )
       } yield xa
     
-    val postgres = postgreSqlResource().evalTap(checkPostgresConnection)
-    new AppResources(postgres) {}
+    val db = postgreSqlResource().evalTap(checkDbConnection)
+    new AppResources(db) {}
   }
 }

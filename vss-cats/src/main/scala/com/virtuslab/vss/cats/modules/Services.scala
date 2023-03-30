@@ -12,10 +12,10 @@ sealed abstract class Services[F[_]](
 
 object Services {
   def make[F[_]: Async: Logger](
-    postgres: Resource[F, Transactor[F]]
+    db: Resource[F, Transactor[F]]
   ): Services[F] = {
     new Services[F](
-      passwords = Passwords.make[F](postgres)
+      passwords = Passwords.make[F](db)
     ) {}
   }
 }

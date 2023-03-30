@@ -17,7 +17,7 @@ sealed abstract class Passwords[F[_]] {
 
 object Passwords {
   def make[F[_]: MonadThrow: MonadCancelThrow: Logger](
-    postgres: Resource[F, Transactor[F]]
+    db: Resource[F, Transactor[F]]
   ): Passwords[F] = new Passwords[F] {
 
     private def makeAllHashes(password: String): NonEmptyList[(String, String)] =
@@ -29,7 +29,7 @@ object Passwords {
       val values = hashes.map { (hashType, hash) =>
         hash
       }
-      postgres.use { transactor =>
+      db.use { transactor =>
         (fr"select count(*) from hashed_passwords where password_hash in " ++ Fragments.parentheses(Fragments.values(values)))
           .query[Int]
           .unique
@@ -49,7 +49,7 @@ object Passwords {
           <* Logger[F].info(s"Wrong hash type: $hashType")
 
     private def saveHash(hashedPassword: HashedPassword): F[Unit] =
-      postgres.use { transactor =>
+      db.use { transactor =>
         sql"insert into hashed_passwords (hash_type, password_hash) values (${hashedPassword.hashType}, ${hashedPassword.hash})"
           .update
           .run
