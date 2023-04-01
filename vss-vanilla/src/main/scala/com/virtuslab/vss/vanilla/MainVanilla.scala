@@ -11,8 +11,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io.StdIn
+import scala.util.Failure
+import scala.util.Success
 
 @main def mainVanilla(): Unit =
-  val httpServer = new VanillaHttpServer().runHttpServer()
-  val grpcServer = new VanillaGrpcServer().runGrpcServer()
+  val httpPort = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
+  val httpServer = new VanillaHttpServer().runHttpServer(httpPort)
+  println(s"Go to http://localhost:$httpPort/docs to open SwaggerUI")
+
+  val grpcPort = sys.env.get("GRPC_PORT").flatMap(_.toIntOption).getOrElse(8181)
+  val grpcServer = new VanillaGrpcServer().runGrpcServer(grpcPort)
+  println(s"GRPC server is up and running at http://localhost:$grpcPort/ to open SwaggerUI")
+
   Await.result(Future.sequence(List(httpServer, grpcServer)), Duration.Inf)

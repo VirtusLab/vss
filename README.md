@@ -82,6 +82,6 @@ curl -X 'POST' \
 gRPC request example:
 
 ```bash
-grpcurl -d '{"hashType": "MD5", "password": "somepassword"}' --import-path commons/src/main/protobuf --proto password.proto --plaintext localhost:8181 com.virtuslab.vss.proto.HashPasswordService/HashPassword
+grpcurl -d '{"hashType": "MD5", "password": "somepassword"}' --import-path vss-vanilla/src/main/protobuf --proto password.proto --plaintext localhost:8181 com.virtuslab.vss.proto.HashPasswordService/HashPassword
 ```
 

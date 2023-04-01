@@ -13,10 +13,10 @@ class HashPasswordGrpcServer()(implicit ec: ExecutionContext) extends HashPasswo
     Future(HashedPasswordMessage(request.hashType, request.password, HashAlgorithm.hash(request.password)))
 
 class VanillaGrpcServer():
-  def runGrpcServer(): Future[Unit] =
+  def runGrpcServer(grpcPort: Int): Future[Unit] =
     implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
     val server = ServerBuilder
-      .forPort(8181)
+      .forPort(grpcPort)
       .addService(HashPasswordServiceGrpc.bindService(new HashPasswordGrpcServer(), ec))
       .build
       .start

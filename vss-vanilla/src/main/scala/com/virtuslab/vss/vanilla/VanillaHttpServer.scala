@@ -22,15 +22,9 @@ object VanillaEndpoints:
 
 class VanillaHttpServer():
 
-  def runHttpServer(): Future[Unit] =
-    val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
+  def runHttpServer(httpPort: Int): Future[Unit] =
     val program =
-      for
-        binding <- NettyFutureServer().port(port).addEndpoints(VanillaEndpoints.all).start()
-        _ <- Future {
-          println(s"Go to http://localhost:${binding.port}/docs to open SwaggerUI. Press ENTER key to exit.")
-        }
-        stop <- binding.stop()
-      yield stop
+      for binding <- NettyFutureServer().port(httpPort).addEndpoints(VanillaEndpoints.all).start()
+      yield ()
 
     program

@@ -12,9 +12,6 @@ lazy val root = (project in file("."))
 
 lazy val commons = (project in file("commons"))
   .settings(
-    Compile / PB.targets := Seq(
-      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
-    ),
     libraryDependencies ++= Seq(
       "ch.qos.logback" % "logback-classic" % "1.4.5",
       "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion,
@@ -22,15 +19,18 @@ lazy val commons = (project in file("commons"))
       "commons-codec" % "commons-codec" % "1.15",
       "com.softwaremill.sttp.client3" %% "upickle" % "3.8.11" % Test,
       "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
-      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
-      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
       "com.softwaremill.sttp.tapir" %% "tapir-sttp-stub-server" % tapirVersion % Test
     )
   )
 
 lazy val vss_vanilla = (project in file("vss-vanilla"))
   .settings(
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
+    ),
     libraryDependencies ++= Seq(
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
       "com.softwaremill.sttp.tapir" %% "tapir-netty-server" % tapirVersion
     )
   )
@@ -38,8 +38,13 @@ lazy val vss_vanilla = (project in file("vss-vanilla"))
 
 lazy val vss_zio = (project in file("vss-zio"))
   .settings(
+    Compile / PB.targets := Seq(
+      scalapb.gen(grpc = true) -> (Compile / sourceManaged).value,
+      scalapb.zio_grpc.ZioCodeGenerator -> (Compile / sourceManaged).value
+    ),
     libraryDependencies ++= Seq(
-      "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion
+      "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
     )
   )
   .dependsOn(commons)

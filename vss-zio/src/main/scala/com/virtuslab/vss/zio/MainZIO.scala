@@ -1,38 +1,36 @@
 package com.virtuslab.vss.zio
 
-import org.slf4j.LoggerFactory
 import sttp.tapir.server.interceptor.log.DefaultServerLog
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
-import zio.{Console, ExitCode, Scope, Task, ZIO, ZIOAppArgs, ZIOAppDefault}
-import zio.http.{HttpApp, Server, ServerConfig}
+import zio._
+import zio.http.{HttpApp, Server => HttpServer, ServerConfig}
+import scalapb.zio_grpc.{Server => GrpcServer}
+import java.io.IOException
+import com.virtuslab.vss.zio.ZioGrpcServer.GrpcServerConfig
 
 object MainZIO extends ZIOAppDefault:
-  val log = LoggerFactory.getLogger(ZioHttpInterpreter.getClass.getName)
 
-  override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] =
-    val serverOptions: ZioHttpServerOptions[Any] =
-      ZioHttpServerOptions.customiseInterceptors
-        .serverLog(
-          DefaultServerLog[Task](
-            doLogWhenReceived = msg => ZIO.succeed(log.debug(msg)),
-            doLogWhenHandled = (msg, error) => ZIO.succeed(error.fold(log.debug(msg))(err => log.debug(msg, err))),
-            doLogAllDecodeFailures =
-              (msg, error) => ZIO.succeed(error.fold(log.debug(msg))(err => log.debug(msg, err))),
-            doLogExceptions = (msg: String, ex: Throwable) => ZIO.succeed(log.debug(msg, ex)),
-            noLog = ZIO.unit
-          )
-        )
-        .options
-    val app: HttpApp[Any, Throwable] = ZioHttpServer.createZioHttpApp()
+  def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Any] =
 
-    val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
+    val httpPort = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
+    val grpcPort = sys.env.get("GRPC_PORT").flatMap(_.toIntOption).getOrElse(8181)
 
-    (
-      for
-        _ <- Console.printLine(s"Go to http://localhost:${port}/docs to open SwaggerUI")
-        _ <- Server.serve(app.withDefaultErrorResponse)
-      yield ()
-    ).provide(
-      ServerConfig.live(ServerConfig.default.port(port)),
-      Server.live
-    )
+    val program: ZIO[ServerConfig & HttpServer & GrpcServerConfig & GrpcServer, Throwable, Unit] = for {
+      _ <- HttpServer.serve(ZioHttpServer.routes.withDefaultErrorResponse)
+      httpConfig <- ZIO.service[ServerConfig]
+      _ <- Console.printLine(s"Go to http://localhost:${httpConfig.port}/docs to open SwaggerUI")
+      _ <- ZIO.service[GrpcServer].flatMap(_.start)
+      grpcConfig <- ZIO.service[GrpcServerConfig]
+      _ <- Console.printLine(s"GRPC server is up and running at http://localhost:${grpcConfig.port}/ to open SwaggerUI")
+    } yield ()
+
+    program
+      .provide(
+        // HTTP server layers
+        ServerConfig.live(ServerConfig.default.port(httpPort)),
+        HttpServer.live, // produces HttpServer
+        // GRPC server layers
+        ZLayer.succeed(GrpcServerConfig(grpcPort)),
+        ZioGrpcServer.live // produces GrpcServer
+      )
+      .exitCode

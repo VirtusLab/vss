@@ -16,6 +16,9 @@ import sttp.tapir.swagger.bundle.SwaggerInterpreter
 
 import scala.concurrent.Future
 import sttp.tapir.server.ServerEndpoint
+import zio.http.Server
+import java.io.IOException
+import zio.http.ServerConfig
 
 object ZioHttpServer {
 
@@ -29,7 +32,6 @@ object ZioHttpServer {
   val docs: List[ZServerEndpoint[Any, Any]] = SwaggerInterpreter()
     .fromServerEndpoints[Task](List(zioHashPasswordEndpointServer), "vss-zio", "1.0.0")
 
-  def createZioHttpApp(): HttpApp[Any, Throwable] =
-    ZioHttpInterpreter().toHttp(List(zioHashPasswordEndpointServer) ++ docs)
+  val routes = ZioHttpInterpreter().toHttp(List(zioHashPasswordEndpointServer) ++ docs)
 
 }
