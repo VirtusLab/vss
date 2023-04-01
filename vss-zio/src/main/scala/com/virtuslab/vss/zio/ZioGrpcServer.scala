@@ -34,6 +34,7 @@ object ZioGrpcServer {
   def builder(grpcServerConfig: GrpcServerConfig) =
     ServerBuilder.forPort(grpcServerConfig.port).addService(ProtoReflectionService.newInstance())
 
+  // Layer that takes GrpcServerConfig and returns grpc Server instance. Not yet running.  
   def live: ZLayer[GrpcServerConfig, Throwable, Server] = ZLayer.scoped {
     for {
       grpcServerConfig <- ZIO.service[GrpcServerConfig]
