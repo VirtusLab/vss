@@ -59,6 +59,7 @@ lazy val vss_cats = project.in(file("vss-cats"))
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "cats-effect"         % catsEffectVersion,
       "co.fs2"          %% "fs2-core"            % fs2Version,
+      "com.github.fd4s" %% "fs2-kafka"           % "3.0.0-RC1",
       "org.http4s"      %% "http4s-server"       % http4sVersion,
       "org.http4s"      %% "http4s-ember-server" % http4sVersion,
       "org.http4s"      %% "http4s-circe"        % http4sVersion,
@@ -70,5 +71,5 @@ lazy val vss_cats = project.in(file("vss-cats"))
       "io.grpc" % "grpc-netty-shaded" % scalapb.compiler.Version.grpcJavaVersion
     )
   )
-  .dependsOn(commons)
   .enablePlugins(Fs2Grpc)
+  .dependsOn(commons)

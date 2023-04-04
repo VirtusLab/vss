@@ -1,12 +1,12 @@
 package com.virtuslab.vss.zio
 
-import com.virtuslab.vss.common.HashPasswordHttpEndpoints
+import com.virtuslab.vss.common.base.HashPasswordHttpEndpoints
 import sttp.tapir.PublicEndpoint
 import sttp.tapir.ztapir.*
 import sttp.tapir.server.ziohttp.ZioHttpInterpreter
 import zio.http.{HttpApp, Request, Response}
 import zio.*
-import com.virtuslab.vss.common.{HashPassword, HashedPassword}
+import com.virtuslab.vss.common.base.{HashPassword, HashedPassword}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.upickle.*
 import com.virtuslab.vss.common.HashAlgorithm

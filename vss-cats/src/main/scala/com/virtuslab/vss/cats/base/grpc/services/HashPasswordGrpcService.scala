@@ -1,4 +1,4 @@
-package com.virtuslab.vss.cats.grpc.services
+package com.virtuslab.vss.cats.base.grpc.services
 
 import cats.effect.*
 import cats.*
@@ -6,7 +6,7 @@ import cats.syntax.all.*
 import io.grpc.*
 import fs2.grpc.syntax.all.*
 import com.virtuslab.vss.proto.cats.password.*
-import com.virtuslab.vss.cats.services.*
+import com.virtuslab.vss.cats.base.services.*
 import com.virtuslab.vss.common.*
 
 object HashPasswordGrpcService {

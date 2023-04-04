@@ -1,4 +1,4 @@
-package com.virtuslab.vss.cats.http.routes
+package com.virtuslab.vss.cats.base.http.routes
 
 import org.http4s.dsl.Http4sDsl
 import cats.Monad
@@ -7,20 +7,20 @@ import sttp.tapir.server.http4s.Http4sServerInterpreter
 import org.http4s.HttpRoutes
 import cats.effect.kernel.Async
 import com.virtuslab.vss.common.*
-import com.virtuslab.vss.cats.services.*
+import com.virtuslab.vss.cats.base.services.*
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
+import com.virtuslab.vss.common.BaseEndpoints
 
-import com.virtuslab.vss.common.CheckPasswordHttpEndpoints
 final case class PasswordRoutes[F[_]: Monad: Async](
   passwords: Passwords[F]
 ) extends Http4sDsl[F]:
   private val httpRoutes: HttpRoutes[F] =
     Http4sServerInterpreter[F]()
       .toRoutes(List(
-        HashPasswordHttpEndpoints.hashPasswordEndpoint.serverLogic[F] { rawPassword =>
+        BaseEndpoints.hashPasswordEndpoint.serverLogic[F] { rawPassword =>
           passwords.hashPassword(rawPassword).attempt.map(_.leftMap(_ => ()))
         },
-        CheckPasswordHttpEndpoints.checkPasswordEndpoint.serverLogicSuccess[F] { checkData =>
+        BaseEndpoints.checkPasswordEndpoint.serverLogicSuccess[F] { checkData =>
           passwords.checkPassword(checkData)
         }
       ))
@@ -29,8 +29,8 @@ final case class PasswordRoutes[F[_]: Monad: Async](
     Http4sServerInterpreter[F]().toRoutes(
       SwaggerInterpreter()
         .fromEndpoints[F](List(
-          HashPasswordHttpEndpoints.hashPasswordEndpoint,
-          CheckPasswordHttpEndpoints.checkPasswordEndpoint
+          BaseEndpoints.hashPasswordEndpoint,
+          BaseEndpoints.checkPasswordEndpoint
         ),
         "vss-cats",
         "1.0.0"

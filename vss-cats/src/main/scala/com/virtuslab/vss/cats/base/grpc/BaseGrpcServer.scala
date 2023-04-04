@@ -1,4 +1,4 @@
-package com.virtuslab.vss.cats.grpc
+package com.virtuslab.vss.cats.base.grpc
 
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import fs2.grpc.syntax.all.*
@@ -6,19 +6,19 @@ import cats.*
 import cats.effect.*
 import org.typelevel.log4cats.*
 import io.grpc.*
-import com.virtuslab.vss.cats.grpc.services.*
-import com.virtuslab.vss.cats.modules.*
+import com.virtuslab.vss.cats.base.grpc.services.*
+import com.virtuslab.vss.cats.base.services.*
 
-trait CatsGrpcServer[F[_]]:
+trait BaseGrpcServer[F[_]]:
   def newServer(services: Services[F]): Resource[F, Server]
 
-object CatsGrpcServer:
-  def apply[F[_]: CatsGrpcServer]: CatsGrpcServer[F] = summon
+object BaseGrpcServer:
+  def apply[F[_]: BaseGrpcServer]: BaseGrpcServer[F] = summon
 
   val port: Int = 8081
 
-  given forAsyncLogger[F[_]: Async: Logger]: CatsGrpcServer[F] =
-    new CatsGrpcServer[F]:
+  given forAsyncLogger[F[_]: Async: Logger]: BaseGrpcServer[F] =
+    new BaseGrpcServer[F]:
       override def newServer(services: Services[F]): Resource[F, Server] =
         for {
           hashPasswordGrpcService <- HashPasswordGrpcService.make[F](services.passwords)

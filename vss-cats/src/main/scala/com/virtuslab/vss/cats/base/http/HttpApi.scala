@@ -1,9 +1,10 @@
-package com.virtuslab.vss.cats.modules
+package com.virtuslab.vss.cats.base.http
 
 import cats.effect.kernel.Async
-import com.virtuslab.vss.cats.http.routes.*
+import com.virtuslab.vss.cats.base.http.routes.*
 import org.http4s.HttpRoutes
 import org.http4s.HttpApp
+import com.virtuslab.vss.cats.base.services.Services
 
 object HttpApi:
   def make[F[_]: Async](
