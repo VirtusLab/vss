@@ -21,7 +21,7 @@ final case class PasswordRoutes[F[_]: Monad: Async](
           passwords.hashPassword(rawPassword).attempt.map(_.leftMap(_ => ()))
         },
         BaseEndpoints.checkPasswordEndpoint.serverLogicSuccess[F] { checkData =>
-          passwords.checkPassword(checkData)
+          passwords.checkPwned(checkData)
         }
       ))
   

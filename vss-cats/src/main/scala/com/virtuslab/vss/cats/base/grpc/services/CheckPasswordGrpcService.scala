@@ -11,12 +11,12 @@ import com.virtuslab.vss.common.*
 
 object CheckPasswordGrpcService {
   def make[F[_]: Async: Monad](passwords: Passwords[F]): Resource[F, ServerServiceDefinition] =
-    CheckPasswordServiceFs2Grpc.bindServiceResource[F](new CheckPasswordServiceFs2Grpc {
-      override def checkPassword(request: CheckPasswordMessage, ctx: Metadata): F[CheckedPasswordMessage] =
-        passwords.checkPassword(
-          CheckPassword(request.password)
+    PwnedServiceFs2Grpc.bindServiceResource[F](new PwnedServiceFs2Grpc {
+      override def checkPwned(request: CheckPwnedRequest, ctx: Metadata): F[CheckPwnedResponse] =
+        passwords.checkPwned(
+          CheckPwned(request.email)
         ).map { checkedPassword =>
-          CheckedPasswordMessage(checkedPassword.pwned)
+          CheckPwnedResponse(request.email, checkedPassword.pwned_times)
         }
     })
 }

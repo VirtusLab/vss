@@ -15,10 +15,10 @@ object StatsGrpcService {
       override def getAllEvents(request: EmptyRequest, ctx: Metadata): F[AllEvents] =
         stats.getAllEvents()
           .map(_.map {
-            case event @ Event.CheckedPassword(password) =>
-              EventResponse(eventType = event.getClass().getCanonicalName(), password = password)
+            case event @ Event.CheckedPwned(email) =>
+              EventResponse(eventType = event.getClass().getCanonicalName(), email = Some(email))
             case event @ Event.HashedPassword(password, hashType) =>
-              EventResponse(eventType = event.getClass().getCanonicalName(), password = password, hashType = Some(hashType))
+              EventResponse(eventType = event.getClass().getCanonicalName(), password = Some(password), hashType = Some(hashType))
           })
           .map(AllEvents(_))
           
