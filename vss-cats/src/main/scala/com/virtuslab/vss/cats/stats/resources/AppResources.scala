@@ -24,7 +24,7 @@ object AppResources {
 
     val kafkaSettings =  
       ConsumerSettings[F, String, String]
-        .withAutoOffsetReset(AutoOffsetReset.Latest)
+        .withAutoOffsetReset(AutoOffsetReset.Earliest)
         .withBootstrapServers("localhost:9092")
         .withGroupId("stats")
   

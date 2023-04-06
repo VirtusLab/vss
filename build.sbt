@@ -8,7 +8,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "vss-bootstrap"
   )
-  .aggregate(vss_vanilla, vss_zio, commons)
+  .aggregate(vss_vanilla, vss_zio, vss_cats, commons)
 
 lazy val commons = (project in file("commons"))
   .settings(

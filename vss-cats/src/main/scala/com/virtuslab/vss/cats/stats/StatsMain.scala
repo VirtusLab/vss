@@ -5,7 +5,7 @@ import cats.effect.*
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.virtuslab.vss.cats.stats.resources.AppResources
-// import com.virtuslab.vss.cats.stats.grpc.StatsGrpcServer
+import com.virtuslab.vss.cats.stats.grpc.StatsGrpcServer
 import com.virtuslab.vss.cats.stats.http.StatsHttpServer
 import com.virtuslab.vss.cats.stats.http.HttpApi
 import com.virtuslab.vss.cats.stats.services.Services
@@ -26,7 +26,7 @@ object StatsMain {
           _ <- res.kafkaConsumer.stream.evalTap { record =>
             services.stats.addEvent(record.record.value)
           }.compile.drain.background
-          // _ <- StatsGrpcServer[IO].newServer(services)
+          _ <- StatsGrpcServer[IO].newServer(services)
         } yield ()
       }.useForever
 }
