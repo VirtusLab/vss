@@ -6,7 +6,7 @@ import cats.effect.*
 
 object Config {
 
-  def load[F[_]: Async](): F[AppConfig] =
+  def load[F[_]: Async](): F[BaseAppConfig] =
     (
       env("BASE_HTTP_HOST").as[String].default("127.0.0.1"),
       env("BASE_HTTP_PORT").as[Int].default(8080),
@@ -20,18 +20,18 @@ object Config {
       env("KAFKA_HOST").as[String].default("127.0.0.1"),
       env("KAFKA_PORT").as[Int].default(9092),
     ).parMapN { (baseHttpHost, baseHttpPort, baseGrpcHost, baseGrpcPort, baseDbHost, baseDbPort, baseDbName, baseDbUser, baseDbPassword, kafkaHost, kafkaPort) =>
-      AppConfig(
-        baseHttpPort,
+      BaseAppConfig(
         baseHttpHost,
-        baseGrpcPort,
+        baseHttpPort,
         baseGrpcHost,
-        baseDbPort,
+        baseGrpcPort,
         baseDbHost,
+        baseDbPort,
         baseDbName,
         baseDbUser,
         baseDbPassword,
-        kafkaPort,
-        kafkaHost
+        kafkaHost,
+        kafkaPort
       )
     }.load[F]
 

@@ -8,19 +8,19 @@ import org.typelevel.log4cats.*
 import io.grpc.*
 import com.virtuslab.vss.cats.base.grpc.services.*
 import com.virtuslab.vss.cats.base.services.*
-import com.virtuslab.vss.cats.base.config.AppConfig
+import com.virtuslab.vss.cats.base.config.BaseAppConfig
 import java.net.InetSocketAddress
 import com.google.common.net.InetAddresses
 
 trait BaseGrpcServer[F[_]]:
-  def newServer(appConfig: AppConfig, services: Services[F]): Resource[F, Server]
+  def newServer(appConfig: BaseAppConfig, services: Services[F]): Resource[F, Server]
 
 object BaseGrpcServer:
   def apply[F[_]: BaseGrpcServer]: BaseGrpcServer[F] = summon
 
   given forAsyncLogger[F[_]: Async: Logger]: BaseGrpcServer[F] =
     new BaseGrpcServer[F]:
-      override def newServer(appConfig: AppConfig, services: Services[F]): Resource[F, Server] =
+      override def newServer(appConfig: BaseAppConfig, services: Services[F]): Resource[F, Server] =
         for {
           hashPasswordGrpcService <- HashPasswordGrpcService.make[F](services.passwords)
           checkPasswordGrpcService <- CheckPasswordGrpcService.make[F](services.passwords)

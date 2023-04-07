@@ -7,10 +7,10 @@ import org.http4s.server.Server
 import cats.effect.kernel.Async
 import org.http4s.ember.server.EmberServerBuilder
 import org.typelevel.log4cats.Logger
-import com.virtuslab.vss.cats.base.config.AppConfig
+import com.virtuslab.vss.cats.base.config.BaseAppConfig
 
 trait BaseHttpServer[F[_]]:
-  def newServer(appConfig: AppConfig, app: HttpApp[F]): Resource[F, Server]
+  def newServer(appConfig: BaseAppConfig, app: HttpApp[F]): Resource[F, Server]
 
 object BaseHttpServer:
   def apply[F[_]: BaseHttpServer]: BaseHttpServer[F] = summon
@@ -20,7 +20,7 @@ object BaseHttpServer:
 
   given forAsyncLogger[F[_]: Async: Logger]: BaseHttpServer[F] =
     new BaseHttpServer[F]:
-      override def newServer(appConfig: AppConfig, app: HttpApp[F]): Resource[F, Server] =
+      override def newServer(appConfig: BaseAppConfig, app: HttpApp[F]): Resource[F, Server] =
         EmberServerBuilder
           .default[F]
           .withHostOption(Host.fromString(appConfig.httpHost))

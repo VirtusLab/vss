@@ -11,7 +11,7 @@ import doobie.hikari.HikariTransactor
 import org.typelevel.log4cats.Logger
 import fs2.kafka.ProducerSettings
 import fs2.kafka.KafkaProducer
-import com.virtuslab.vss.cats.base.config.AppConfig
+import com.virtuslab.vss.cats.base.config.BaseAppConfig
 
 sealed abstract class AppResources[F[_]](
   val db: Transactor[F],
@@ -20,7 +20,7 @@ sealed abstract class AppResources[F[_]](
 
 object AppResources {
 
-  def make[F[_]: Sync: Async: Logger](appConfig: AppConfig): Resource[F, AppResources[F]] = {
+  def make[F[_]: Sync: Async: Logger](appConfig: BaseAppConfig): Resource[F, AppResources[F]] = {
     def checkDbConnection(transactor: Transactor[F]): F[Unit] =
       sql"select version();".query[String].unique.transact(transactor).flatMap { v =>
         Logger[F].info(s"Connected to DB $v")

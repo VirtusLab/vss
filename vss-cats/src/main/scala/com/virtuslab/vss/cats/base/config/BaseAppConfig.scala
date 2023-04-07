@@ -1,15 +1,15 @@
 package com.virtuslab.vss.cats.base.config
 
-case class AppConfig(
-  httpPort: Int,
+case class BaseAppConfig(
   httpHost: String,
-  grpcPort: Int,
+  httpPort: Int,
   grpcHost: String,
-  postgresPort: Int,
+  grpcPort: Int,
   postgresHost: String,
+  postgresPort: Int,
   dbName: String,
   postgresUser: String,
   postgresPassword: String,
-  kafkaPort: Int,
   kafkaHost: String,
+  kafkaPort: Int,
 )

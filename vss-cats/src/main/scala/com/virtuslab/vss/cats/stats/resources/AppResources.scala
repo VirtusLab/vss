@@ -12,6 +12,7 @@ import org.typelevel.log4cats.Logger
 import fs2.kafka.*
 import cats.effect.std.AtomicCell
 import _root_.com.virtuslab.vss.common.Event
+import _root_.com.virtuslab.vss.cats.stats.config.StatsAppConfig
 
 sealed abstract class AppResources[F[_]](
   val kafkaConsumer: KafkaConsumer[F, String, String],
@@ -20,12 +21,12 @@ sealed abstract class AppResources[F[_]](
 
 object AppResources {
 
-  def make[F[_]: Sync: Async: Logger](): Resource[F, AppResources[F]] = {
+  def make[F[_]: Sync: Async: Logger](appConfig: StatsAppConfig): Resource[F, AppResources[F]] = {
 
     val kafkaSettings =  
       ConsumerSettings[F, String, String]
         .withAutoOffsetReset(AutoOffsetReset.Earliest)
-        .withBootstrapServers("localhost:9092")
+        .withBootstrapServers(s"${appConfig.kafkaHost}:${appConfig.kafkaPort}")
         .withGroupId("stats")
   
 
