@@ -70,6 +70,7 @@ lazy val vss_cats = project.in(file("vss-cats"))
       "org.tpolecat"    %% "doobie-hikari"       % doobieVersion,
       "dev.optics"      %% "monocle-core"        % monocleVersion,
       "dev.optics"      %% "monocle-macro"       % monocleVersion,
+      "is.cir"          %% "ciris"               % "3.1.0",
       "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
       "io.grpc" % "grpc-netty-shaded" % scalapb.compiler.Version.grpcJavaVersion
     )

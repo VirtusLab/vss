@@ -11,6 +11,7 @@ import doobie.hikari.HikariTransactor
 import org.typelevel.log4cats.Logger
 import fs2.kafka.ProducerSettings
 import fs2.kafka.KafkaProducer
+import com.virtuslab.vss.cats.base.config.AppConfig
 
 sealed abstract class AppResources[F[_]](
   val db: Transactor[F],
@@ -19,7 +20,7 @@ sealed abstract class AppResources[F[_]](
 
 object AppResources {
 
-  def make[F[_]: Sync: Async: Logger](): Resource[F, AppResources[F]] = {
+  def make[F[_]: Sync: Async: Logger](appConfig: AppConfig): Resource[F, AppResources[F]] = {
     def checkDbConnection(transactor: Transactor[F]): F[Unit] =
       sql"select version();".query[String].unique.transact(transactor).flatMap { v =>
         Logger[F].info(s"Connected to DB $v")
@@ -28,18 +29,18 @@ object AppResources {
     def postgreSqlResource(): Resource[F, Transactor[F]] =
       for {
         ec <- ExecutionContexts.cachedThreadPool
-        xa <- HikariTransactor.newHikariTransactor[F](
+        transactor <- HikariTransactor.newHikariTransactor[F](
           "org.postgresql.Driver",
-          "jdbc:postgresql://localhost:5432/vss",
-          "postgres",
-          "postgres",
+          s"jdbc:postgresql://${appConfig.postgresHost}:${appConfig.postgresPort}/${appConfig.dbName}",
+          appConfig.postgresUser,
+          appConfig.postgresPassword,
           ec
         )
-      } yield xa
+      } yield transactor
 
     val producerSettings =  
       ProducerSettings[F, String, String]  
-        .withBootstrapServers("localhost:9092")  
+        .withBootstrapServers(s"${appConfig.kafkaHost}:${appConfig.kafkaPort}")  
         .withProperty("topic.creation.enable", "true")
 
     def kafkaResource(): Resource[F, KafkaProducer[F, String, String]] =

@@ -8,23 +8,24 @@ import org.typelevel.log4cats.*
 import io.grpc.*
 import com.virtuslab.vss.cats.base.grpc.services.*
 import com.virtuslab.vss.cats.base.services.*
+import com.virtuslab.vss.cats.base.config.AppConfig
+import java.net.InetSocketAddress
+import com.google.common.net.InetAddresses
 
 trait BaseGrpcServer[F[_]]:
-  def newServer(services: Services[F]): Resource[F, Server]
+  def newServer(appConfig: AppConfig, services: Services[F]): Resource[F, Server]
 
 object BaseGrpcServer:
   def apply[F[_]: BaseGrpcServer]: BaseGrpcServer[F] = summon
 
-  val port: Int = 8081
-
   given forAsyncLogger[F[_]: Async: Logger]: BaseGrpcServer[F] =
     new BaseGrpcServer[F]:
-      override def newServer(services: Services[F]): Resource[F, Server] =
+      override def newServer(appConfig: AppConfig, services: Services[F]): Resource[F, Server] =
         for {
           hashPasswordGrpcService <- HashPasswordGrpcService.make[F](services.passwords)
           checkPasswordGrpcService <- CheckPasswordGrpcService.make[F](services.passwords)
           server <- NettyServerBuilder
-            .forPort(port)
+            .forAddress(new InetSocketAddress(InetAddresses.forString(appConfig.grpcHost), appConfig.grpcPort))
             .addService(hashPasswordGrpcService)
             .addService(checkPasswordGrpcService)
             .resource[F]
