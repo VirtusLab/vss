@@ -20,10 +20,10 @@ object BaseMain {
       .flatMap { res =>
         val services = Services.make[IO](res.db, res.kafka)
         val httpApi = HttpApi.make[IO](services)
-        for {
-          _ <- BaseHttpServer[IO].newServer(httpApi.httpApp)
-          _ <- BaseGrpcServer[IO].newServer(services)
-        } yield ()
+        (
+          BaseHttpServer[IO].newServer(httpApi.httpApp),
+          BaseGrpcServer[IO].newServer(services)
+        ).parTupled.void
       }.useForever
 
 }

@@ -45,9 +45,11 @@ object AppResources {
     def kafkaResource(): Resource[F, KafkaProducer[F, String, String]] =
       KafkaProducer.resource(producerSettings)
     
-    for {
-      db <- postgreSqlResource().evalTap(checkDbConnection)
-      kafka <- kafkaResource()
-    } yield new AppResources(db, kafka) {}
+    (
+      postgreSqlResource().evalTap(checkDbConnection),
+      kafkaResource()
+    ).parMapN { (db, kafka) =>
+      new AppResources(db, kafka) {}
+    }
   }
 }

@@ -32,9 +32,11 @@ object AppResources {
     def kafkaResource(): Resource[F, KafkaConsumer[F, String, String]] =
       KafkaConsumer.resource(kafkaSettings)
     
-    for {
-      kafka <- kafkaResource()
-      eventsStore <- Resource.eval(AtomicCell[F].of[Seq[Event]](Seq.empty))
-    } yield new AppResources(kafka, eventsStore) {}
+    (
+      kafkaResource(),
+      Resource.eval(AtomicCell[F].of[Seq[Event]](Seq.empty))
+    ).parMapN { (kafka, eventsStore) =>
+      new AppResources(kafka, eventsStore) {}
+    }
   }
 }

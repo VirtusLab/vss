@@ -9,9 +9,9 @@ import com.virtuslab.vss.cats.stats.StatsMain
 object Main extends IOApp.Simple {
 
   override def run: IO[Unit] =
-    Parallel.parTuple2(
+    (
       BaseMain.run,
       StatsMain.run
-    ).void
+    ).parTupled.void
 
 }
