@@ -17,7 +17,7 @@ object StatsHttpServer:
   val port: Port = port"8180"
 
   def printSwaggerMessage[F[_]: Logger](server: Server): F[Unit] =
-    Logger[F].info(s"Go to http://localhost:${port.value}/docs to open SwaggerUI. Press ENTER key to exit.")
+    Logger[F].info(s"Go to http://localhost:${port.value}/docs to open SwaggerUI for the Stats service.")
 
   given forAsyncLogger[F[_]: Async: Logger]: StatsHttpServer[F] =
     new StatsHttpServer[F]:

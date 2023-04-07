@@ -53,6 +53,7 @@ val http4sVersion = "0.23.18"
 val fs2Version = "3.6.1"
 val catsEffectVersion = "3.4.8"
 val doobieVersion = "1.0.0-RC2"
+val monocleVersion = "3.2.0"
 
 lazy val vss_cats = project.in(file("vss-cats"))
   .settings(
@@ -67,6 +68,8 @@ lazy val vss_cats = project.in(file("vss-cats"))
       "org.tpolecat"    %% "doobie-core"         % doobieVersion,
       "org.tpolecat"    %% "doobie-postgres"     % doobieVersion,
       "org.tpolecat"    %% "doobie-hikari"       % doobieVersion,
+      "dev.optics"      %% "monocle-core"        % monocleVersion,
+      "dev.optics"      %% "monocle-macro"       % monocleVersion,
       "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
       "io.grpc" % "grpc-netty-shaded" % scalapb.compiler.Version.grpcJavaVersion
     )
