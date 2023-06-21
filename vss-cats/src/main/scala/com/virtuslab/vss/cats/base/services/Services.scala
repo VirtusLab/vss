@@ -6,6 +6,7 @@ import doobie.*
 import com.virtuslab.vss.cats.base.services.*
 import org.typelevel.log4cats.Logger
 import fs2.kafka.KafkaProducer
+import natchez.Trace
 
 sealed abstract class Services[F[_]](
   val passwords: Passwords[F],
@@ -13,7 +14,7 @@ sealed abstract class Services[F[_]](
 )
 
 object Services {
-  def make[F[_]: Async: Logger](
+  def make[F[_]: Async: Logger: Trace](
     transactor: Transactor[F],
     kafka: KafkaProducer[F, String, String]
   ): Services[F] = {

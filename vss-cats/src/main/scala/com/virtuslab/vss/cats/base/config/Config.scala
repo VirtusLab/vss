@@ -3,6 +3,7 @@ package com.virtuslab.vss.cats.base.config
 import ciris.*
 import cats.syntax.all.*
 import cats.effect.*
+import java.net.URI
 
 object Config {
 
@@ -19,7 +20,8 @@ object Config {
       env("BASE_DB_PASSWORD").as[String].default("postgres"),
       env("KAFKA_HOST").as[String].default("127.0.0.1"),
       env("KAFKA_PORT").as[Int].default(9092),
-    ).parMapN { (baseHttpHost, baseHttpPort, baseGrpcHost, baseGrpcPort, baseDbHost, baseDbPort, baseDbName, baseDbUser, baseDbPassword, kafkaHost, kafkaPort) =>
+      env("JEAGER_URI").as[String].default("http://localhost:16686")
+    ).parMapN { (baseHttpHost, baseHttpPort, baseGrpcHost, baseGrpcPort, baseDbHost, baseDbPort, baseDbName, baseDbUser, baseDbPassword, kafkaHost, kafkaPort, jaegerUri) =>
       BaseAppConfig(
         baseHttpHost,
         baseHttpPort,
@@ -31,7 +33,8 @@ object Config {
         baseDbUser,
         baseDbPassword,
         kafkaHost,
-        kafkaPort
+        kafkaPort,
+        jaegerUri
       )
     }.load[F]
 

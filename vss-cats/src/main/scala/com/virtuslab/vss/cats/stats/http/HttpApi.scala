@@ -10,14 +10,11 @@ import org.http4s.server.Router
 object HttpApi:
   def make[F[_]: Async](
     services: Services[F]
-  ): HttpApi[F] = new HttpApi[F](services) {}
+  ): HttpRoutes[F] = {
 
-sealed abstract class HttpApi[F[_]: Async](
-  val services: Services[F]
-):
+  val statsRoutes = StatsRoutes[F](services.stats).routes
 
-  private val statsRoutes = StatsRoutes[F](services.stats).routes
+  val routes: HttpRoutes[F] = statsRoutes
 
-  private val routes: HttpRoutes[F] = statsRoutes
-
-  val httpApp: HttpApp[F] = routes.orNotFound
+  routes
+}

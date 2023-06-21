@@ -11,6 +11,7 @@ import com.virtuslab.vss.cats.stats.http.HttpApi
 import com.virtuslab.vss.cats.stats.services.Services
 import com.virtuslab.vss.common.*
 import com.virtuslab.vss.cats.stats.config.Config
+import com.virtuslab.vss.cats.stats.kafka.EventsConsumer
 
 object StatsMain {
   
@@ -23,12 +24,9 @@ object StatsMain {
           val services = Services.make[IO](res.eventsStore)
           val httpApi = HttpApi.make[IO](services)
           for {
-            _ <- StatsHttpServer[IO].newServer(appConfig, httpApi.httpApp)
+            _ <- StatsHttpServer[IO].newServer(appConfig, httpApi.orNotFound)
             _ <- StatsGrpcServer[IO].newServer(appConfig, services)
-            _ <- Resource.eval(res.kafkaConsumer.subscribeTo("events"))
-            _ <- res.kafkaConsumer.stream.evalTap { record =>
-              services.stats.addEvent(record.record.value)
-            }.compile.drain.background
+            _ <- EventsConsumer[IO].runConsumer(res.kafkaConsumer, services).background
           } yield ()
         }.useForever
     }

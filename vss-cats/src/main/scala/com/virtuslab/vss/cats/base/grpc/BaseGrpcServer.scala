@@ -11,6 +11,7 @@ import com.virtuslab.vss.cats.base.services.*
 import com.virtuslab.vss.cats.base.config.BaseAppConfig
 import java.net.InetSocketAddress
 import com.google.common.net.InetAddresses
+import natchez.{ Span, Trace }
 
 trait BaseGrpcServer[F[_]]:
   def newServer(appConfig: BaseAppConfig, services: Services[F]): Resource[F, Server]
@@ -18,9 +19,12 @@ trait BaseGrpcServer[F[_]]:
 object BaseGrpcServer:
   def apply[F[_]: BaseGrpcServer]: BaseGrpcServer[F] = summon
 
-  given forAsyncLogger[F[_]: Async: Logger]: BaseGrpcServer[F] =
+  given forAsyncLogger[F[_]: Async: Logger: Trace]: BaseGrpcServer[F] =
     new BaseGrpcServer[F]:
-      override def newServer(appConfig: BaseAppConfig, services: Services[F]): Resource[F, Server] =
+      override def newServer(
+        appConfig: BaseAppConfig,
+        services: Services[F],
+      ): Resource[F, Server] =
         for {
           hashPasswordGrpcService <- HashPasswordGrpcService.make[F](services.passwords)
           checkPasswordGrpcService <- CheckPasswordGrpcService.make[F](services.passwords)

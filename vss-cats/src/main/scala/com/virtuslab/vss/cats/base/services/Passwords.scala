@@ -10,6 +10,7 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.typelevel.log4cats.Logger
 import cats.data.*
 import monocle.syntax.all.*
+import natchez.Trace
 
 sealed abstract class Passwords[F[_]] {
   def checkPwned(checkPassword: CheckPwned): F[CheckedPwned]
@@ -17,21 +18,26 @@ sealed abstract class Passwords[F[_]] {
 }
 
 object Passwords {
-  def make[F[_]: MonadThrow: MonadCancelThrow: Logger](
+  def make[F[_]: MonadThrow: MonadCancelThrow: Logger: Trace](
     transactor: Transactor[F],
     events: Events[F]
   ): Passwords[F] = new Passwords[F] {
 
-    private def doCheckPwned(email: String): F[Int] =
+    private def doCheckPwned(email: String): F[Int] = Trace[F].span("doCheckPwned") {
       sql"select breaches_no from pwned where email = $email"
         .query[Int]
-        .option
+        .option 
         .transact(transactor)
         .map(_.getOrElse(0))
+    }
 
-    override def checkPwned(checkPwned: CheckPwned): F[CheckedPwned] =
-      doCheckPwned(checkPwned.email).map(CheckedPwned.apply(checkPwned.email, _))
-        <* events.publishEvent(Event.CheckedPwned(checkPwned.email))
+    override def checkPwned(checkPwned: CheckPwned): F[CheckedPwned] = Trace[F].span("checkPwned") {
+      for {
+        pwnd <- doCheckPwned(checkPwned.email).map(CheckedPwned.apply(checkPwned.email, _))
+        _ <- Trace[F].put("email" -> checkPwned.email, "pwnd" -> pwnd.pwned_times.toString)
+        _ <- events.publishEvent(Event.CheckedPwned(checkPwned.email))
+      } yield pwnd
+    }
 
     private def hashAlgorithm(hashType: String): F[(String => String)] = hashType match
       case "sha256" => Monad[F].pure(DigestUtils.sha256Hex)
@@ -39,24 +45,26 @@ object Passwords {
         MonadThrow[F].raiseError(new RuntimeException("Unsupported hash type"))
           <* Logger[F].info(s"Unsupported hash type: $hashType")
 
-    private def saveHash(hashedPassword: HashedPassword): F[Unit] =
+    private def saveHash(hashedPassword: HashedPassword): F[Unit] = Trace[F].span("saveHash") {
       sql"""|insert into hashed_passwords (password, hash_type, password_hash)
             | values (${hashedPassword.password}, ${hashedPassword.hashType}, ${hashedPassword.hash}) on conflict do nothing""".stripMargin
         .update
         .run
         .transact(transactor)
         .void
+    }
 
-    private def getHash(hashType: String, password: String): F[Option[HashedPassword]] =
+    private def getHash(hashType: String, password: String): F[Option[HashedPassword]] = Trace[F].span("getHash") {
       sql"select hash_type, password, password_hash from hashed_passwords where hash_type = $hashType and password = $password"
         .query[HashedPassword]
         .option
         .transact(transactor)
+    }
 
     private def normalizeHashPassword(hashPassword: HashPassword): HashPassword =
       hashPassword.focus(_.hashType).modify(_.toLowerCase)
 
-    override def hashPassword(_hashPassword: HashPassword): F[HashedPassword] =
+    override def hashPassword(_hashPassword: HashPassword): F[HashedPassword] = Trace[F].span("hashPassword") {
       val hashPassword = normalizeHashPassword(_hashPassword)
       for {
         maybeHashedPassword <- getHash(hashPassword.hashType, hashPassword.password)
@@ -74,6 +82,7 @@ object Passwords {
         _ <- events.publishEvent(Event.HashedPassword(hashPassword.password, hashPassword.hashType))
         _ <- saveHash(hashedPassword)
       } yield hashedPassword
+    }
 
   }
 }

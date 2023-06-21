@@ -1,6 +1,6 @@
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.2.2"
+ThisBuild / scalaVersion := "3.3.0"
 
 val tapirVersion = "1.2.10"
 
@@ -10,7 +10,14 @@ lazy val root = (project in file("."))
   )
   .aggregate(vss_vanilla, vss_zio, vss_cats, commons)
 
+val commonSettings = (
+  scalacOptions ++= Seq(
+    "-Ykind-projector"
+  )
+)
+
 lazy val commons = (project in file("commons"))
+  .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
       "ch.qos.logback" % "logback-classic" % "1.4.5",
@@ -24,6 +31,7 @@ lazy val commons = (project in file("commons"))
   )
 
 lazy val vss_vanilla = (project in file("vss-vanilla"))
+  .settings(commonSettings)
   .settings(
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
@@ -37,6 +45,7 @@ lazy val vss_vanilla = (project in file("vss-vanilla"))
   .dependsOn(commons)
 
 lazy val vss_zio = (project in file("vss-zio"))
+  .settings(commonSettings)
   .settings(
     Compile / PB.targets := Seq(
       scalapb.gen(grpc = true) -> (Compile / sourceManaged).value,
@@ -56,6 +65,7 @@ val doobieVersion = "1.0.0-RC2"
 val monocleVersion = "3.2.0"
 
 lazy val vss_cats = project.in(file("vss-cats"))
+  .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "cats-effect"         % catsEffectVersion,
@@ -71,7 +81,9 @@ lazy val vss_cats = project.in(file("vss-cats"))
       "dev.optics"      %% "monocle-core"        % monocleVersion,
       "dev.optics"      %% "monocle-macro"       % monocleVersion,
       "is.cir"          %% "ciris"               % "3.1.0",
-      "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
+      "com.softwaremill.sttp.tapir" %% "tapir-http4s-server"   % tapirVersion,
+      "org.tpolecat" %% "natchez-http4s" % "0.5.0",
+      "org.tpolecat" %% "natchez-jaeger" % "0.3.0",
       "io.grpc" % "grpc-netty-shaded" % scalapb.compiler.Version.grpcJavaVersion
     )
   )

@@ -10,8 +10,9 @@ import com.virtuslab.vss.common.*
 import com.virtuslab.vss.cats.base.services.*
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import com.virtuslab.vss.common.BaseEndpoints
+import natchez.Trace
 
-final case class PasswordRoutes[F[_]: Monad: Async](
+final case class PasswordRoutes[F[_]: Monad: Async: Trace](
   passwords: Passwords[F]
 ) extends Http4sDsl[F]:
   private val httpRoutes: HttpRoutes[F] =

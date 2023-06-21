@@ -12,6 +12,10 @@ import org.typelevel.log4cats.Logger
 import fs2.kafka.ProducerSettings
 import fs2.kafka.KafkaProducer
 import com.virtuslab.vss.cats.base.config.BaseAppConfig
+import natchez.EntryPoint
+import natchez.jaeger.Jaeger
+import io.jaegertracing.Configuration.ReporterConfiguration
+import io.jaegertracing.Configuration.SamplerConfiguration
 
 sealed abstract class AppResources[F[_]](
   val db: Transactor[F],
@@ -45,7 +49,7 @@ object AppResources {
 
     def kafkaResource(): Resource[F, KafkaProducer[F, String, String]] =
       KafkaProducer.resource(producerSettings)
-    
+
     (
       postgreSqlResource().evalTap(checkDbConnection),
       kafkaResource()
@@ -53,4 +57,17 @@ object AppResources {
       new AppResources(db, kafka) {}
     }
   }
+
+  def makeEntryPoint[F[_]: Sync](appConfig: BaseAppConfig): Resource[F, EntryPoint[F]] =
+    Jaeger.entryPoint[F](
+      system    = "vss",
+      uriPrefix = Some(new java.net.URI(appConfig.jaegerUri)),
+    ) { c =>
+      Sync[F].delay {
+        c.withSampler(SamplerConfiguration.fromEnv)
+        .withReporter(ReporterConfiguration.fromEnv)
+        .getTracer
+      }
+    }
+
 }
