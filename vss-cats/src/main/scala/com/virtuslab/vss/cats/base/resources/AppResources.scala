@@ -17,13 +17,19 @@ import natchez.jaeger.Jaeger
 import io.jaegertracing.Configuration.ReporterConfiguration
 import io.jaegertracing.Configuration.SamplerConfiguration
 
+/**
+  * Resources needed by the application.
+  */
 sealed abstract class AppResources[F[_]](
   val db: Transactor[F],
   val kafka: KafkaProducer[F, String, String]
 )
 
-object AppResources {
 
+object AppResources {
+  /**
+    * Creates resources needed by the application.
+    */
   def make[F[_]: Sync: Async: Logger](appConfig: BaseAppConfig): Resource[F, AppResources[F]] = {
     def checkDbConnection(transactor: Transactor[F]): F[Unit] =
       sql"select version();".query[String].unique.transact(transactor).flatMap { v =>
@@ -58,6 +64,18 @@ object AppResources {
     }
   }
 
+  /**
+    * Creates an entry point for tracing.
+    *
+    * This needs to be created in a separate step, because it will be
+    * instantiated with a different monad. That is because the entry point is
+    * used to initialize the tracing monad and the other resources have to be in
+    * the context of the tracing monad, since they will be passed to the service
+    * layer.
+    *
+    * TLDR: if the entry point is created in monad `F[_]`, other resources will have
+    * to be created in monad `Span[F] => F[_]`.
+    */
   def makeEntryPoint[F[_]: Sync](appConfig: BaseAppConfig): Resource[F, EntryPoint[F]] =
     Jaeger.entryPoint[F](
       system    = "vss",

@@ -8,6 +8,9 @@ import com.virtuslab.vss.cats.stats.services.Services
 import org.http4s.server.Router
 
 object HttpApi:
+  /**
+    * Create the combined routes for the whole application.
+    */
   def make[F[_]: Async](
     services: Services[F]
   ): HttpRoutes[F] = {

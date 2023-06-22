@@ -18,6 +18,9 @@ object StatsHttpServer:
   def printSwaggerMessage[F[_]: Logger](server: Server): F[Unit] =
     Logger[F].info(s"Go to http:/${server.address}/docs to open SwaggerUI for the Stats service.")
 
+  /**
+    * Default HTTP server instance for any effect type that has instances of `Async`, `Logger` and `Trace`.
+    */
   given forAsyncLogger[F[_]: Async: Logger]: StatsHttpServer[F] =
     new StatsHttpServer[F]:
       override def newServer(appConfig: StatsAppConfig, app: HttpApp[F]): Resource[F, Server] =

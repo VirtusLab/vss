@@ -6,6 +6,9 @@ import fs2.kafka.KafkaProducer
 import upickle.default.*
 import cats.Monad
 
+/**
+ * Service responsible for publishing events to Kafka.
+ */
 sealed abstract class Events[F[_]] {
   def publishEvent(event: Event): F[Unit]
 }

@@ -20,6 +20,9 @@ object StatsGrpcServer:
 
   val port: Int = 8181
 
+  /**
+    * Default gRPC server instance for any effect type that has instances of `Async`, `Logger` and `Trace`.
+    */
   given forAsyncLogger[F[_]: Async: Logger]: StatsGrpcServer[F] =
     new StatsGrpcServer[F]:
       override def newServer(appConfig: StatsAppConfig, services: Services[F]): Resource[F, Server] =

@@ -19,6 +19,11 @@ trait BaseGrpcServer[F[_]]:
 object BaseGrpcServer:
   def apply[F[_]: BaseGrpcServer]: BaseGrpcServer[F] = summon
 
+  /**
+    * Default gRPC server instance for any effect type that has instances of `Async`, `Logger` and `Trace`.
+    * 
+    * Every service is started and after that, the server is started.
+    */
   given forAsyncLogger[F[_]: Async: Logger: Trace]: BaseGrpcServer[F] =
     new BaseGrpcServer[F]:
       override def newServer(

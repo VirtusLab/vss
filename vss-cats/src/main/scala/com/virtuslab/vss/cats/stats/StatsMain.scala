@@ -13,21 +13,23 @@ import com.virtuslab.vss.common.*
 import com.virtuslab.vss.cats.stats.config.Config
 import com.virtuslab.vss.cats.stats.kafka.EventsConsumer
 
+/**
+  * This object is responsible for starting the stats application. It loads the
+  * configuration, creates resources and starts the servers.
+  */
 object StatsMain {
   
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
-  def run: IO[Unit] =
-    Config.load[IO].flatMap { appConfig =>
-      AppResources.make[IO](appConfig)
-        .flatMap { res =>
-          val services = Services.make[IO](res.eventsStore)
-          val httpApi = HttpApi.make[IO](services)
-          for {
-            _ <- StatsHttpServer[IO].newServer(appConfig, httpApi.orNotFound)
-            _ <- StatsGrpcServer[IO].newServer(appConfig, services)
-            _ <- EventsConsumer[IO].runConsumer(res.kafkaConsumer, services).background
-          } yield ()
-        }.useForever
-    }
+  def run: IO[Unit] = {
+    for {
+      appConfig <- Resource.eval(Config.load[IO]())
+      res <- AppResources.make[IO](appConfig)
+      services = Services.make[IO](res.eventsStore)
+      httpApi = HttpApi.make[IO](services)
+      _ <- StatsHttpServer[IO].newServer(appConfig, httpApi.orNotFound)
+      _ <- StatsGrpcServer[IO].newServer(appConfig, services)
+      _ <- EventsConsumer[IO].runConsumer(res.kafkaConsumer, services).background
+    } yield ()
+  }.useForever
 }

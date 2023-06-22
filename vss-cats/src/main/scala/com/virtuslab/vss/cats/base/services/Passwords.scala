@@ -12,12 +12,28 @@ import cats.data.*
 import monocle.syntax.all.*
 import natchez.Trace
 
+/**
+  * Service (algebra) for password hashing and checking if password was pwned.
+  *
+  * The logic related to password hashing and checking if password was pwned is
+  * implemented in this service.
+  *
+  * Note that the declaration of `Passwords` does not have any typeclass
+  * constraints. They are only present in the implementation.
+  */
 sealed abstract class Passwords[F[_]] {
   def checkPwned(checkPassword: CheckPwned): F[CheckedPwned]
   def hashPassword(hashPassword: HashPassword): F[HashedPassword]
 }
 
 object Passwords {
+  /**
+    * The implementation of `Passwords` service.
+    *
+    * @param transactor Transactor from `doobie` library, allows to execute SQL queries
+    * @param events Service responsible for publishing events
+    * @return
+    */
   def make[F[_]: MonadThrow: MonadCancelThrow: Logger: Trace](
     transactor: Transactor[F],
     events: Events[F]
@@ -68,6 +84,7 @@ object Passwords {
       val hashPassword = normalizeHashPassword(_hashPassword)
       for {
         maybeHashedPassword <- getHash(hashPassword.hashType, hashPassword.password)
+        _ <- Trace[F].put("hashType" -> hashPassword.hashType, "password" -> hashPassword.password)
         hashedPassword <- maybeHashedPassword match {
           case Some(hashedPassword) =>
             Monad[F].pure(hashedPassword)
@@ -78,7 +95,8 @@ object Passwords {
               hash = hashAlgorithm(hashPassword.password)
               hashedPassword = HashedPassword(hashPassword.hashType, hashPassword.password, hash)
             } yield hashedPassword
-        }
+          }
+        _ <- Trace[F].put("hash" -> hashedPassword.hash)
         _ <- events.publishEvent(Event.HashedPassword(hashPassword.password, hashPassword.hashType))
         _ <- saveHash(hashedPassword)
       } yield hashedPassword

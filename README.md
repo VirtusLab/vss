@@ -25,28 +25,38 @@ Assumptions:
 
 ## VSS bootstrap architecture example
 
-What examplary problem VSS bootstrap solves?
-The goal of the system is to check password security and return the information if the given password (or password hash) is safe to be used. For each check request we will try to crack the password or check it against common known leaks.
-The system can be fed with a stream of plain text password combinations that should be forbidden to use (treated as easy to crack). 
+What exemplary problem VSS bootstrap solves?
+The goal of the system is to get password hashed or check whether a given email is associated with any known leak.
 
 ![VSS bootstrap architecture](docs/architecture.drawio.svg)
 
 
 ## Technology and functionalities
 
-Check Password Service:
+Base Service:
 * HTTP/gRPC endpoints
-* Storing forbidden combinations in database
-* Caching layer for recently cracked/used password
+* Providing password hashes for the given password hash type pair
+* Checking if a given email address is present in the leaks database
 * Pub/Sub solution for sending events about checked passwords
-
+* Tracing information about performed operations
 
 Stats Service:
 * Read check results events from Pub/Sub
-* Displaying current system stats and browsing the historical checks
-
+* Displaying all the accumulated events by HTTP/gRPC
 
 ## Solution
+
+### Setting up the local environment
+
+Docker compose
+```
+docker-compose up
+```
+
+Pulumi
+```
+TODO
+```
 
 ### Run VSS demo app:
 
@@ -58,6 +68,13 @@ $ sbt "vss_vanilla/runMain com.virtuslab.vss.vanilla.mainVanilla"
 VSS ZIO
 ```
 $ sbt "vss_zio/runMain com.virtuslab.vss.zio.MainZIO"
+```
+
+### VSS Cats
+
+VSS Cats
+```
+sbt "vss_cats/run"
 ```
 
 ### Use it:
@@ -74,14 +91,13 @@ curl -X 'POST' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
-  "hashType": "MD5",
+  "hashType": "SHA256",
   "password": "some_password"
 }'
 ```
 
-gRPC request example:
+gRPC request example (for vss cats):
 
 ```bash
-grpcurl -d '{"hashType": "MD5", "password": "somepassword"}' --import-path vss-vanilla/src/main/protobuf --proto password.proto --plaintext localhost:8181 com.virtuslab.vss.proto.HashPasswordService/HashPassword
+grpcurl -d '{"hashType": "SHA256", "password": "somepassword"}' --import-path vss-cats/src/main/protobuf --proto password.proto --plaintext localhost:8081 com.virtuslab.vss.proto.cats.HashPasswordService/HashPassword
 ```
-

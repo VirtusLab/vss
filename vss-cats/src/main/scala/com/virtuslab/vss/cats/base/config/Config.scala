@@ -6,7 +6,9 @@ import cats.effect.*
 import java.net.URI
 
 object Config {
-
+  /**
+    * Loads the configuration from the environment variables, using ciris.
+    */
   def load[F[_]: Async](): F[BaseAppConfig] =
     (
       env("BASE_HTTP_HOST").as[String].default("127.0.0.1"),

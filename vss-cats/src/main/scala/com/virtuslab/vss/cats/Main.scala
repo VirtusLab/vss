@@ -8,6 +8,9 @@ import com.virtuslab.vss.cats.stats.StatsMain
 
 object Main extends IOApp.Simple {
 
+  /**
+    * Run the application. Run the main programs of the submodules in parallel.
+    */
   override def run: IO[Unit] =
     (
       BaseMain.run,

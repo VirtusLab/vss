@@ -8,6 +8,9 @@ import upickle.default.*
 import cats.Monad
 import cats.effect.std.AtomicCell
 
+/**
+ * Service responsible for handling events.
+ */
 sealed abstract class Stats[F[_]] {
   def getAllEvents(): F[List[Event]]
   def addEvent(eventStr: String): F[Unit]

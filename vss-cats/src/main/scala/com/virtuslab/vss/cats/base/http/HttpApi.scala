@@ -13,6 +13,12 @@ import natchez.EntryPoint
 import natchez.http4s.implicits.*
 
 object HttpApi:
+  /**
+    * Create the combined routes for the whole application.
+    *
+    * This is also the place to add any middleware that should be applied to all
+    * routes.
+    */
   def make[F[_]: Async: Trace](
     services: Services[F]
   ): HttpRoutes[F] = {
