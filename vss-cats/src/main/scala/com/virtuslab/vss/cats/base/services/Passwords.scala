@@ -39,19 +39,19 @@ object Passwords {
     events: Events[F]
   ): Passwords[F] = new Passwords[F] {
 
-    private def doCheckPwned(email: String): F[Int] = Trace[F].span("doCheckPwned") {
-      sql"select breaches_no from pwned where email = $email"
-        .query[Int]
-        .option 
+    private def doCheckPwned(passwordHash: String): F[Boolean] = Trace[F].span("doCheckPwned") {
+      sql"select hash_type from hashed_passwords where password_hash = $passwordHash"
+        .query[String]
+        .to[List]
         .transact(transactor)
-        .map(_.getOrElse(0))
+        .map(_.nonEmpty)
     }
 
     override def checkPwned(checkPwned: CheckPwned): F[CheckedPwned] = Trace[F].span("checkPwned") {
       for {
-        pwnd <- doCheckPwned(checkPwned.email).map(CheckedPwned.apply(checkPwned.email, _))
-        _ <- Trace[F].put("email" -> checkPwned.email, "pwnd" -> pwnd.pwned_times.toString)
-        _ <- events.publishEvent(Event.CheckedPwned(checkPwned.email))
+        pwnd <- doCheckPwned(checkPwned.passwordHash).map(CheckedPwned.apply(checkPwned.passwordHash, _))
+        _ <- Trace[F].put("passwordHash" -> checkPwned.passwordHash, "pwnd" -> pwnd.toString)
+        _ <- events.publishEvent(Event.CheckedPwned(checkPwned.passwordHash))
       } yield pwnd
     }
 

@@ -26,7 +26,7 @@ Assumptions:
 ## VSS bootstrap architecture example
 
 What exemplary problem VSS bootstrap solves?
-The goal of the system is to get password hashed or check whether a given email is associated with any known leak.
+The goal of the system is to get password hashed or check whether a given password hash has been queried before.
 
 ![VSS bootstrap architecture](docs/architecture.drawio.svg)
 
@@ -36,7 +36,7 @@ The goal of the system is to get password hashed or check whether a given email 
 Base Service:
 * HTTP/gRPC endpoints
 * Providing password hashes for the given password hash type pair
-* Checking if a given email address is present in the leaks database
+* Checking if a given password hash has been queried in the hash service before
 * Pub/Sub solution for sending events about checked passwords
 * Tracing information about performed operations
 

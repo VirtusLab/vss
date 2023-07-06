@@ -14,9 +14,9 @@ object CheckPasswordGrpcService {
     PwnedServiceFs2Grpc.bindServiceResource[F](new PwnedServiceFs2Grpc {
       override def checkPwned(request: CheckPwnedRequest, ctx: Metadata): F[CheckPwnedResponse] =
         passwords.checkPwned(
-          CheckPwned(request.email)
+          CheckPwned(request.passwordHash)
         ).map { checkedPassword =>
-          CheckPwnedResponse(request.email, checkedPassword.pwned_times)
+          CheckPwnedResponse(request.passwordHash, checkedPassword.pwned)
         }
     })
 }

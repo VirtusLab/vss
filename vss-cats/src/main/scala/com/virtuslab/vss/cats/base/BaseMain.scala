@@ -34,7 +34,7 @@ object BaseMain {
     def apply[A](l: TIO[A]): IO[A] = l.run(s)
   }
 
-  def unliftTraceK: FunctionK[IO, TIO] = new FunctionK[IO, TIO] {
+  def toTraceK: FunctionK[IO, TIO] = new FunctionK[IO, TIO] {
     def apply[A](l: IO[A]): TIO[A] = Kleisli.liftF(l)
   }
 

@@ -4,7 +4,7 @@ import upickle.default.*
 
 enum Event:
   case HashedPassword(password: String, hashType: String)
-  case CheckedPwned(email: String)
+  case CheckedPwned(passwordHash: String)
 
 object Event {
   given ReadWriter[Event] = ReadWriter.merge(
