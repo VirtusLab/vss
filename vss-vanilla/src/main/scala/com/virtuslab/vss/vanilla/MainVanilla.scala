@@ -1,6 +1,6 @@
 package com.virtuslab.vss.vanilla
 
-import com.virtuslab.vss.common.{HashAlgorithm, HashPasswordHttpEndpoints, HashedPassword}
+import com.virtuslab.vss.common.HashAlgorithm
 import com.virtuslab.vss.proto.password.HashPasswordServiceGrpc
 import com.virtuslab.vss.proto.password.{HashPasswordMessage, HashedPasswordMessage}
 import io.grpc.ServerBuilder
