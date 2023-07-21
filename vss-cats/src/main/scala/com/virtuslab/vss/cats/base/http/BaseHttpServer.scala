@@ -9,25 +9,15 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.typelevel.log4cats.Logger
 import com.virtuslab.vss.cats.base.config.BaseAppConfig
 
-trait BaseHttpServer[F[_]]:
-  def newServer(appConfig: BaseAppConfig, app: HttpApp[F]): Resource[F, Server]
-
 object BaseHttpServer:
-  def apply[F[_]: BaseHttpServer]: BaseHttpServer[F] = summon
-
   def printSwaggerMessage[F[_]: Logger](server: Server): F[Unit] =
     Logger[F].info(s"Go to http:/${server.address}/docs to open SwaggerUI for the Base service.")
 
-  /**
-    * Default Http server instance for any effect type that has instances of `Async` and `Logger`.
-    */
-  given forAsyncLogger[F[_]: Async: Logger]: BaseHttpServer[F] =
-    new BaseHttpServer[F]:
-      override def newServer(appConfig: BaseAppConfig, app: HttpApp[F]): Resource[F, Server] =
-        EmberServerBuilder
-          .default[F]
-          .withHostOption(Host.fromString(appConfig.httpHost))
-          .withPort(Port.fromInt(appConfig.httpPort).getOrElse(port"8080"))
-          .withHttpApp(app)
-          .build
-          .evalTap(printSwaggerMessage[F])
+  def make[F[_]: Async: Logger](appConfig: BaseAppConfig, app: HttpApp[F]): Resource[F, Server] =
+    EmberServerBuilder
+      .default[F]
+      .withHostOption(Host.fromString(appConfig.httpHost))
+      .withPort(Port.fromInt(appConfig.httpPort).getOrElse(port"8080"))
+      .withHttpApp(app)
+      .build
+      .evalTap(printSwaggerMessage[F])

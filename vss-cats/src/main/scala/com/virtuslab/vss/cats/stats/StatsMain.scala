@@ -18,7 +18,6 @@ import com.virtuslab.vss.cats.stats.kafka.EventsConsumer
   * configuration, creates resources and starts the servers.
   */
 object StatsMain {
-  
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   def run: IO[Unit] = {
@@ -27,9 +26,9 @@ object StatsMain {
       res <- AppResources.make[IO](appConfig)
       services = Services.make[IO](res.eventsStore)
       httpApi = HttpApi.make[IO](services)
-      _ <- StatsHttpServer[IO].newServer(appConfig, httpApi.orNotFound)
-      _ <- StatsGrpcServer[IO].newServer(appConfig, services)
-      _ <- EventsConsumer[IO].runConsumer(res.kafkaConsumer, services).background
+      _ <- StatsHttpServer.make[IO](appConfig, httpApi.orNotFound)
+      _ <- StatsGrpcServer.make[IO](appConfig, services)
+      _ <- EventsConsumer.runConsumer[IO](res.kafkaConsumer, services).background
     } yield ()
   }.useForever
 }

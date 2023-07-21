@@ -7,7 +7,6 @@ import com.virtuslab.vss.cats.base.BaseMain
 import com.virtuslab.vss.cats.stats.StatsMain
 
 object Main extends IOApp.Simple {
-
   /**
     * Run the application. Run the main programs of the submodules in parallel.
     */
@@ -16,5 +15,4 @@ object Main extends IOApp.Simple {
       BaseMain.run,
       StatsMain.run
     ).parTupled.void
-
 }

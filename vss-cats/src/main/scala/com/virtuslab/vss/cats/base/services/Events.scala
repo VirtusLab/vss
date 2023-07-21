@@ -18,9 +18,7 @@ object Events {
     kafka: KafkaProducer[F, String, String]
   ): Events[F] =
     new Events[F] {
-
       override def publishEvent(event: Event): F[Unit] =
         kafka.produceOne("events", "event", write(event)).flatten.void
-
     }
 }

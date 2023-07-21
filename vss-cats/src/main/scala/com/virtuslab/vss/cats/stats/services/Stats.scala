@@ -12,7 +12,7 @@ import cats.effect.std.AtomicCell
  * Service responsible for handling events.
  */
 sealed abstract class Stats[F[_]] {
-  def getAllEvents(): F[List[Event]]
+  def getLatestEvents(amount: Int): F[List[Event]]
   def addEvent(eventStr: String): F[Unit]
 }
 
@@ -21,12 +21,10 @@ object Stats {
     eventsStore: AtomicCell[F, Seq[Event]]
   ): Stats[F] =
     new Stats[F] {
-
-      def getAllEvents(): F[List[Event]] =
-        eventsStore.get.map(_.toList)
+      def getLatestEvents(amount: Int): F[List[Event]] =
+        eventsStore.get.map(_.take(amount).toList)
 
       def addEvent(eventStr: String): F[Unit] =
-        eventsStore.update(_ :+ read[Event](eventStr))
-
+        eventsStore.update(read[Event](eventStr) +: _)
     }
 }

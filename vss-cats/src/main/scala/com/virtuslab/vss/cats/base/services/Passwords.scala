@@ -62,8 +62,8 @@ object Passwords {
           <* Logger[F].info(s"Unsupported hash type: $hashType")
 
     private def saveHash(hashedPassword: HashedPassword): F[Unit] = Trace[F].span("saveHash") {
-      sql"""|insert into hashed_passwords (password, hash_type, password_hash)
-            | values (${hashedPassword.password}, ${hashedPassword.hashType}, ${hashedPassword.hash}) on conflict do nothing""".stripMargin
+      sql"""|insert into hashed_passwords (hash_type, password_hash)
+            | values (${hashedPassword.hashType}, ${hashedPassword.hash}) on conflict do nothing""".stripMargin
         .update
         .run
         .transact(transactor)
@@ -71,10 +71,11 @@ object Passwords {
     }
 
     private def getHash(hashType: String, password: String): F[Option[HashedPassword]] = Trace[F].span("getHash") {
-      sql"select hash_type, password, password_hash from hashed_passwords where hash_type = $hashType and password = $password"
-        .query[HashedPassword]
+      sql"select hash_type, password_hash from hashed_passwords where hash_type = $hashType and password = $password"
+        .query[(String, String)]
         .option
         .transact(transactor)
+        .map(_.map(((hashType, hash) => HashedPassword(hashType, password, hash))))
     }
 
     private def normalizeHashPassword(hashPassword: HashPassword): HashPassword =
@@ -97,8 +98,8 @@ object Passwords {
             } yield hashedPassword
           }
         _ <- Trace[F].put("hash" -> hashedPassword.hash)
-        _ <- events.publishEvent(Event.HashedPassword(hashPassword.password, hashPassword.hashType))
         _ <- saveHash(hashedPassword)
+        _ <- events.publishEvent(Event.HashedPassword(hashPassword.password, hashPassword.hashType))
       } yield hashedPassword
     }
 

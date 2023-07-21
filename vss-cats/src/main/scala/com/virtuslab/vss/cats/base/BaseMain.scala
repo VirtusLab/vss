@@ -21,13 +21,13 @@ import natchez.{ Span, EntryPoint }
   * configuration, creates resources and starts the servers.
   *
   * Most top-level classes are instantiated with the `IO` effect type. All the
-  * services and resources are instantiated with the `TIO` effect type.
+  * services and resources are instantiated with the `TIO` (short for traced IO)
+  * effect type.
   */
 object BaseMain {
-
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
-  /** Span[IO] => IO[A] */
+  /** Span[IO] => IO[A] -- Short for `traced IO` */
   type TIO[A] = Kleisli[IO, Span[IO], A]
 
   def fromTraceK(s: Span[IO]): FunctionK[TIO, IO] = new FunctionK[TIO, IO] {
@@ -57,8 +57,8 @@ object BaseMain {
       res <- AppResources.make[TIO](appConfig).mapK(fromTraceK(rootSpan))
       services = Services.make[TIO](res.db, res.kafka)
       httpApi = ep.liftT(HttpApi.make(services))
-      _ <- BaseHttpServer[IO].newServer(appConfig, httpApi.orNotFound)
-      _ <- BaseGrpcServer[TIO].newServer(appConfig, services).mapK(fromTraceK(rootSpan))
+      _ <- BaseHttpServer.make[IO](appConfig, httpApi.orNotFound)
+      _ <- BaseGrpcServer.make[TIO](appConfig, services).mapK(fromTraceK(rootSpan))
     } yield ()
   }.useForever
 }

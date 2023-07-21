@@ -13,30 +13,18 @@ import java.net.InetSocketAddress
 import com.google.common.net.InetAddresses
 import natchez.{ Span, Trace }
 
-trait BaseGrpcServer[F[_]]:
-  def newServer(appConfig: BaseAppConfig, services: Services[F]): Resource[F, Server]
-
 object BaseGrpcServer:
-  def apply[F[_]: BaseGrpcServer]: BaseGrpcServer[F] = summon
-
-  /**
-    * Default gRPC server instance for any effect type that has instances of `Async`, `Logger` and `Trace`.
-    * 
-    * Every service is started and after that, the server is started.
-    */
-  given forAsyncLogger[F[_]: Async: Logger: Trace]: BaseGrpcServer[F] =
-    new BaseGrpcServer[F]:
-      override def newServer(
-        appConfig: BaseAppConfig,
-        services: Services[F],
-      ): Resource[F, Server] =
-        for {
-          hashPasswordGrpcService <- HashPasswordGrpcService.make[F](services.passwords)
-          checkPasswordGrpcService <- CheckPasswordGrpcService.make[F](services.passwords)
-          server <- NettyServerBuilder
-            .forAddress(new InetSocketAddress(InetAddresses.forString(appConfig.grpcHost), appConfig.grpcPort))
-            .addService(hashPasswordGrpcService)
-            .addService(checkPasswordGrpcService)
-            .resource[F]
-            .evalMap(server => Async[F].delay(server.start()))
-        } yield server
+  def make[F[_]: Async: Logger: Trace](
+    appConfig: BaseAppConfig,
+    services: Services[F],
+  ): Resource[F, Server] =
+    for {
+      hashPasswordGrpcService <- HashPasswordGrpcService.make[F](services.passwords)
+      checkPasswordGrpcService <- CheckPasswordGrpcService.make[F](services.passwords)
+      server <- NettyServerBuilder
+        .forAddress(new InetSocketAddress(InetAddresses.forString(appConfig.grpcHost), appConfig.grpcPort))
+        .addService(hashPasswordGrpcService)
+        .addService(checkPasswordGrpcService)
+        .resource[F]
+        .evalMap(server => Async[F].delay(server.start()))
+    } yield server
