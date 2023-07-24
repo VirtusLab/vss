@@ -23,6 +23,7 @@ import besom.util.NotProvided
 object Jaeger {
   val appName = "jaeger"
   val labels  = Map("app" -> "jaeger")
+  // https://www.jaegertracing.io/docs/1.6/getting-started/#all-in-one-docker-image - port descriptions
   val ports = Map(
     "zipkin-thrift-compact" -> (Some("UDP"), 5775),
     "frontend" -> (None, 16686),
@@ -72,7 +73,6 @@ object Jaeger {
     ServiceArgs(
       spec = ServiceSpecArgs(
         selector = labels,
-        // https://www.jaegertracing.io/docs/1.6/getting-started/#all-in-one-docker-image - port descriptions
         ports = ports.map { case (name, (protocol, port)) =>
           ServicePortArgs(name = name, port = port, targetPort = port, protocol = protocol.getOrElse(NotProvided))
         }.toList

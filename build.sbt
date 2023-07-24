@@ -94,6 +94,14 @@ lazy val vss_cats = project
   .enablePlugins(DockerPlugin, JavaAppPackaging, Fs2Grpc)
   .dependsOn(commons)
 
+
+lazy val infra = project.in(file("infra")).settings(
+  libraryDependencies ++= Seq(
+    "org.virtuslab" %% "besom-kubernetes" % "0.0.1-SNAPSHOT",
+    "org.virtuslab" %% "besom-core" % "0.0.1-SNAPSHOT"
+  )
+)
+
 def setupCommonDockerImageConfig(project: Project): Project =
   project
     .settings(

@@ -35,8 +35,8 @@ object VSS {
     val localRegistry = config.get("localRegistry")
     val imageName =config.get("imageName")
     val imageTag = config.get("imageTag")
-    //pulumi"127.0.0.1:${DockerRegistry.exposedPort}/vss-cats:latest"
     val image = pulumi"$localRegistry/$imageName:$imageTag" 
+
     deployment(
       NonEmptyString(appName).get,
       DeploymentArgs(

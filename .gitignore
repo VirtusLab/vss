@@ -2,9 +2,11 @@
 *.log
 .idea
 .bsp
-target
+target/
 .bloop
 .metals
 .bsp
 .vscode
+.scala-build
 
+**/Pulumi.*.yaml
