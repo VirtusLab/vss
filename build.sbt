@@ -10,11 +10,10 @@ lazy val root = (project in file("."))
   )
   .aggregate(vss_vanilla, vss_zio, vss_cats, commons)
 
-val commonSettings = (
+val commonSettings =
   scalacOptions ++= Seq(
     "-Ykind-projector"
   )
-)
 
 lazy val commons = (project in file("commons"))
   .settings(commonSettings)
@@ -64,28 +63,42 @@ val catsEffectVersion = "3.4.8"
 val doobieVersion = "1.0.0-RC2"
 val monocleVersion = "3.2.0"
 
-lazy val vss_cats = project.in(file("vss-cats"))
+lazy val vss_cats = project
+  .in(file("vss-cats"))
+  .configure(setupCommonDockerImageConfig)
   .settings(commonSettings)
   .settings(
+    dockerExposedPorts := Seq(8080,8081,8180,8181),
+    Docker / packageName := "vss-cats",
+    Compile / mainClass := Some("com.virtuslab.vss.cats.Main"),
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "cats-effect"         % catsEffectVersion,
-      "co.fs2"          %% "fs2-core"            % fs2Version,
-      "com.github.fd4s" %% "fs2-kafka"           % "3.0.0-RC1",
-      "org.http4s"      %% "http4s-server"       % http4sVersion,
-      "org.http4s"      %% "http4s-ember-server" % http4sVersion,
-      "org.http4s"      %% "http4s-circe"        % http4sVersion,
-      "org.http4s"      %% "http4s-dsl"          % http4sVersion,
-      "org.tpolecat"    %% "doobie-core"         % doobieVersion,
-      "org.tpolecat"    %% "doobie-postgres"     % doobieVersion,
-      "org.tpolecat"    %% "doobie-hikari"       % doobieVersion,
-      "dev.optics"      %% "monocle-core"        % monocleVersion,
-      "dev.optics"      %% "monocle-macro"       % monocleVersion,
-      "is.cir"          %% "ciris"               % "3.1.0",
-      "com.softwaremill.sttp.tapir" %% "tapir-http4s-server"   % tapirVersion,
+      "org.typelevel" %% "cats-effect" % catsEffectVersion,
+      "co.fs2" %% "fs2-core" % fs2Version,
+      "com.github.fd4s" %% "fs2-kafka" % "3.0.0-RC1",
+      "org.http4s" %% "http4s-server" % http4sVersion,
+      "org.http4s" %% "http4s-ember-server" % http4sVersion,
+      "org.http4s" %% "http4s-circe" % http4sVersion,
+      "org.http4s" %% "http4s-dsl" % http4sVersion,
+      "org.tpolecat" %% "doobie-core" % doobieVersion,
+      "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+      "org.tpolecat" %% "doobie-hikari" % doobieVersion,
+      "dev.optics" %% "monocle-core" % monocleVersion,
+      "dev.optics" %% "monocle-macro" % monocleVersion,
+      "is.cir" %% "ciris" % "3.1.0",
+      "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
       "org.tpolecat" %% "natchez-http4s" % "0.5.0",
       "org.tpolecat" %% "natchez-jaeger" % "0.3.0",
       "io.grpc" % "grpc-netty-shaded" % scalapb.compiler.Version.grpcJavaVersion
     )
   )
-  .enablePlugins(Fs2Grpc)
+  .enablePlugins(DockerPlugin, JavaAppPackaging, Fs2Grpc)
   .dependsOn(commons)
+
+def setupCommonDockerImageConfig(project: Project): Project =
+  project
+    .settings(
+      dockerRepository := Some("localhost:5001"),
+      dockerBaseImage := "eclipse-temurin:11.0.16.1_1-jdk-focal",
+      Docker / aggregate := false,
+      Compile / packageDoc / publishArtifact := false
+    )
