@@ -2,15 +2,11 @@ import besom.*
 import besom.util.*
 import besom.api.kubernetes as k8s
 import k8s.core.v1.inputs.*
+import k8s.core.v1.{Namespace, Service, ConfigMapArgs, ServiceArgs, configMap, namespace, service}
 import k8s.apps.v1.inputs.*
-import k8s.meta.v1.inputs.*
 import k8s.apps.v1.{DeploymentArgs, deployment}
-import k8s.core.v1.{ConfigMapArgs, ServiceArgs, configMap, namespace, service}
+import k8s.meta.v1.inputs.*
 import besom.internal.{Context, Output}
-import besom.api.kubernetes.core.v1.Namespace
-import besom.api.kubernetes.core.v1.Service
-import besom.internal.{Context, Output}
-import scala.runtime.stdLibPatches.language.experimental.namedTypeArguments
 
 object Kafka {
   val appName          = "kafka"
@@ -18,7 +14,7 @@ object Kafka {
   val kafkaServiceName = s"$appName-service"
   val port = 9092
 
-  def deploy(using context: Context)(namespace: Namespace, zookeeperService: Service) = deployment(
+  def deploy(using Context)(namespace: Namespace, zookeeperService: Service) = deployment(
     NonEmptyString(appName).get,
     DeploymentArgs(
       spec = DeploymentSpecArgs(

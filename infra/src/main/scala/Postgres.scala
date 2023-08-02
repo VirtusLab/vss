@@ -1,13 +1,13 @@
 import besom.*
 import besom.api.kubernetes as k8s
-import besom.api.kubernetes.apps.v1.inputs.*
-import besom.api.kubernetes.apps.v1.{DeploymentArgs, deployment}
-import besom.api.kubernetes.core.v1.inputs.*
-import besom.api.kubernetes.core.v1.{ConfigMapArgs, ServiceArgs, *}
-import besom.api.kubernetes.meta.v1.inputs.*
+import k8s.apps.v1.inputs.*
+import k8s.apps.v1.{DeploymentArgs, deployment}
+import k8s.apps.v1.outputs.Deployment
+import k8s.core.v1.inputs.*
+import k8s.core.v1.{ConfigMapArgs, ServiceArgs, *}
+import k8s.meta.v1.inputs.*
 import besom.internal.{Context, Output}
 import besom.util.NonEmptyString
-import besom.api.kubernetes.apps.v1.outputs.Deployment
 
 object Postgres {
   val appName = "postgres"

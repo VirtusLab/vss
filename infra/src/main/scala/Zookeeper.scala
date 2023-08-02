@@ -1,19 +1,18 @@
 import besom.*
 import besom.util.NonEmptyString
 import besom.api.kubernetes as k8s
-import k8s.core.v1.*
 import k8s.core.v1.inputs.*
+import k8s.core.v1.{Namespace, ConfigMapArgs, Service, ServiceArgs, configMap, namespace, service}
 import k8s.apps.v1.inputs.*
-import k8s.meta.v1.inputs.*
 import k8s.apps.v1.{DeploymentArgs, deployment}
-import k8s.core.v1.{ConfigMapArgs, Service, ServiceArgs, configMap, namespace, service}
+import k8s.meta.v1.inputs.*
 import besom.internal.{Context, Output}
 
 object Zookeeper {
   val appName = "zookeeper"
   val labels  = Map("app" -> "zookeeper")
 
-  def deploy(using context: Context)(namespace: Namespace) = deployment(
+  def deploy(using Context)(namespace: Namespace) = deployment(
     NonEmptyString(appName).get,
     DeploymentArgs(
       spec = DeploymentSpecArgs(
@@ -49,7 +48,7 @@ object Zookeeper {
     )
   )
 
-  def deployService(using context: Context)(namespace: Namespace) = service(
+  def deployService(using Context)(namespace: Namespace) = service(
     NonEmptyString(appName).get,
     ServiceArgs(
       spec = ServiceSpecArgs(

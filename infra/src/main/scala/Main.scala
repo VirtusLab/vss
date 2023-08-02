@@ -1,8 +1,6 @@
 import besom.*
-import besom.api.kubernetes as k8s
-import besom.internal.Output
-import k8s.core.v1.{Service, namespace}
-import besom.internal.Config
+import besom.api.kubernetes.core.v1.{Service, namespace}
+import besom.internal.{Config, Output}
 
 @main def main = Pulumi.run {
   val conf = config
