@@ -1,22 +1,11 @@
 import besom.*
 import besom.util.NonEmptyString
 import besom.api.kubernetes as k8s
-import k8s.core.v1.inputs.*
+import k8s.apps.v1.{DeploymentArgs, deployment}
 import k8s.apps.v1.inputs.*
 import k8s.meta.v1.inputs.*
-import k8s.apps.v1.{DeploymentArgs, deployment}
-import k8s.core.v1.{
-  ConfigMapArgs,
-  Namespace,
-  Service,
-  ServiceArgs,
-  configMap,
-  namespace,
-  persistentVolume,
-  persistentVolumeClaim,
-  service
-}
-import besom.internal.{Context, Output}
+import k8s.core.v1.{ConfigMapArgs, Namespace, Service, ServiceArgs, *}
+import k8s.core.v1.inputs.*
 import besom.internal.{Context, Output}
 import besom.util.NotProvided
 
@@ -33,7 +22,7 @@ object Jaeger {
     "jaeger-thrift-client" -> (None, 14268),
     "zipkin-collector" -> (None, 9411)
   )
-  def deploy(using context: Context)(namespace: Namespace) = deployment(
+  def deploy(using Context)(namespace: Namespace) = deployment(
     NonEmptyString(appName).get,
     DeploymentArgs(
       spec = DeploymentSpecArgs(
@@ -68,7 +57,7 @@ object Jaeger {
     )
   )
 
-  def deployService(using context: Context)(namespace: Namespace) = service(
+  def deployService(using Context)(namespace: Namespace) = service(
     NonEmptyString(appName).get,
     ServiceArgs(
       spec = ServiceSpecArgs(

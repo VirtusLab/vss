@@ -1,14 +1,12 @@
 import besom.*
 import besom.util.*
 import besom.api.kubernetes as k8s
-import k8s.core.v1.*
 import k8s.core.v1.inputs.*
+import k8s.core.v1.{Namespace, ConfigMapArgs, Service, ServiceArgs, configMap, namespace, service}
 import k8s.apps.v1.inputs.*
+import k8s.apps.v1.{Deployment, DeploymentArgs, deployment}
 import k8s.meta.v1.inputs.*
-import k8s.apps.v1.{DeploymentArgs, deployment}
-import k8s.core.v1.{ConfigMapArgs, Service, ServiceArgs, configMap, namespace, service}
 import besom.internal.{Context, Output}
-import besom.api.kubernetes.apps.v1.Deployment
 import besom.internal.Config
 
 object VSS {
@@ -25,7 +23,7 @@ object VSS {
   val imageName = "vss-cats"
   val imageTag = "0.1.0-SNAPSHOT"
 
-  def deploy(using context: Context)(
+  def deploy(using Context)(
     config: Config,
     namespace: Namespace,
     postgresService: Service,
@@ -83,7 +81,7 @@ object VSS {
     )
   }
 
-  def deployService(using context: Context)(namespace: Namespace) = service(
+  def deployService(using Context)(namespace: Namespace) = service(
     NonEmptyString(appName).get,
     ServiceArgs(
       spec = ServiceSpecArgs(
