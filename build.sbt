@@ -43,6 +43,9 @@ lazy val vss_vanilla = (project in file("vss-vanilla"))
   )
   .dependsOn(commons)
 
+
+val doobieVersion = "1.0.0-RC2"
+
 lazy val vss_zio = (project in file("vss-zio"))
   .settings(commonSettings)
   .settings(
@@ -51,8 +54,21 @@ lazy val vss_zio = (project in file("vss-zio"))
       scalapb.zio_grpc.ZioCodeGenerator -> (Compile / sourceManaged).value
     ),
     libraryDependencies ++= Seq(
+      "dev.zio" %% "zio" % "2.0.15",
       "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
-      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
+      "org.tpolecat" %% "doobie-core" % doobieVersion,
+      "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+      "org.tpolecat" %% "doobie-hikari" % doobieVersion,
+      "dev.zio" %% "zio-interop-cats" % "23.0.03",
+      "dev.zio" %% "zio-logging" % "2.1.13",
+      "dev.zio" %% "zio-opentracing" % "2.0.3",
+      "io.opentracing" % "opentracing-api" % "0.33.0",
+      "io.jaegertracing" % "jaeger-core" % "1.8.0",
+      "io.jaegertracing" % "jaeger-client" % "1.8.0",
+      "io.scalaland" %% "chimney" % "0.8.0-M1",
+      "dev.zio" %% "zio-streams" % "2.0.9",
+      "dev.zio" %% "zio-kafka" % "2.1.1"
     )
   )
   .dependsOn(commons)
@@ -60,7 +76,6 @@ lazy val vss_zio = (project in file("vss-zio"))
 val http4sVersion = "0.23.18"
 val fs2Version = "3.6.1"
 val catsEffectVersion = "3.4.8"
-val doobieVersion = "1.0.0-RC2"
 val monocleVersion = "3.2.0"
 
 lazy val vss_cats = project
@@ -68,7 +83,7 @@ lazy val vss_cats = project
   .configure(setupCommonDockerImageConfig)
   .settings(commonSettings)
   .settings(
-    dockerExposedPorts := Seq(8080,8081,8180,8181),
+    dockerExposedPorts := Seq(8080, 8081, 8180, 8181),
     Docker / packageName := "vss-cats",
     Compile / mainClass := Some("com.virtuslab.vss.cats.Main"),
     libraryDependencies ++= Seq(
@@ -94,13 +109,14 @@ lazy val vss_cats = project
   .enablePlugins(DockerPlugin, JavaAppPackaging, Fs2Grpc)
   .dependsOn(commons)
 
-
-lazy val infra = project.in(file("infra")).settings(
-  libraryDependencies ++= Seq(
-    "org.virtuslab" %% "besom-kubernetes" % "0.0.1-SNAPSHOT",
-    "org.virtuslab" %% "besom-core" % "0.0.1-SNAPSHOT"
+lazy val infra = project
+  .in(file("infra"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.virtuslab" %% "besom-kubernetes" % "0.0.1-SNAPSHOT",
+      "org.virtuslab" %% "besom-core" % "0.0.1-SNAPSHOT"
+    )
   )
-)
 
 def setupCommonDockerImageConfig(project: Project): Project =
   project
