@@ -24,11 +24,11 @@ object StatsMain {
     for {
       appConfig <- Resource.eval(Config.load[IO]())
       res <- AppResources.make[IO](appConfig)
-      services = Services.make[IO](res.eventsStore)
-      httpApi = HttpApi.make[IO](services)
-      _ <- StatsHttpServer.make[IO](appConfig, httpApi.orNotFound)
-      _ <- StatsGrpcServer.make[IO](appConfig, services)
-      _ <- EventsConsumer.runConsumer[IO](res.kafkaConsumer, services).background
+      services = Services.make(res.eventsStore)
+      httpApi = HttpApi.make(services)
+      _ <- StatsHttpServer.make(appConfig, httpApi.orNotFound)
+      _ <- StatsGrpcServer.make(appConfig, services)
+      _ <- EventsConsumer.runConsumer(res.kafkaConsumer, services).background
     } yield ()
   }.useForever
 }

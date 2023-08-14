@@ -10,9 +10,9 @@ import com.virtuslab.vss.common.*
 import com.virtuslab.vss.cats.stats.services.*
 
 object StatsGrpcService {
-  def make[F[_]: Async: Monad](stats: Stats[F]): Resource[F, ServerServiceDefinition] =
-    StatsServiceFs2Grpc.bindServiceResource[F](new StatsServiceFs2Grpc {
-      override def getLatestEvents(request: EmptyRequest, ctx: Metadata): F[LatestEvents] =
+  def make(stats: Stats): Resource[IO, ServerServiceDefinition] =
+    StatsServiceFs2Grpc.bindServiceResource[IO](new StatsServiceFs2Grpc {
+      override def getLatestEvents(request: EmptyRequest, ctx: Metadata): IO[LatestEvents] =
         stats.getLatestEvents(100)
           .map(_.map {
             case event @ Event.CheckedPwned(passwordHash) =>

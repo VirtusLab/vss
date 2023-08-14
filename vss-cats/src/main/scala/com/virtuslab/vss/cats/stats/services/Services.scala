@@ -8,17 +8,18 @@ import org.typelevel.log4cats.Logger
 import fs2.kafka.KafkaProducer
 import cats.effect.std.AtomicCell
 import com.virtuslab.vss.common.*
+import cats.effect.IO
 
-sealed abstract class Services[F[_]](
-  val stats: Stats[F]
+sealed abstract class Services(
+  val stats: Stats
 )
 
 object Services {
-  def make[F[_]: Async: Logger](
-    eventsStore: AtomicCell[F, Seq[Event]]
-  ): Services[F] = {
-    val stats = Stats.make[F](eventsStore)
-    new Services[F](
+  def make(
+    eventsStore: AtomicCell[IO, Seq[Event]]
+  ): Services = {
+    val stats = Stats.make(eventsStore)
+    new Services(
       stats = stats
     ) {}
   }

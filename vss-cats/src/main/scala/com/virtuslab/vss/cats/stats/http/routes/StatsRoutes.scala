@@ -9,13 +9,14 @@ import com.virtuslab.vss.common.*
 import com.virtuslab.vss.cats.stats.services.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.*
+import cats.effect.IO
 
-final case class StatsRoutes[F[_]: Monad: Async](
-  stats: Stats[F]
-) extends Http4sDsl[F]:
-  val routes: List[ServerEndpoint[Any, F]] =
+final case class StatsRoutes(
+  stats: Stats
+) extends Http4sDsl[IO]:
+  val routes: List[ServerEndpoint[Any, IO]] =
     List(
-      StatsEndpoints.getLatestEvents.serverLogic[F] { rawPassword =>
+      StatsEndpoints.getLatestEvents.serverLogic[IO] { rawPassword =>
         stats.getLatestEvents(100).attempt.map(_.leftMap(_ => ()))
       }
     )

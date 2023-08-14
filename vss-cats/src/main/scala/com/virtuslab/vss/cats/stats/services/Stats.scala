@@ -7,24 +7,25 @@ import fs2.kafka.KafkaProducer
 import upickle.default.*
 import cats.Monad
 import cats.effect.std.AtomicCell
+import cats.effect.IO
 
 /**
  * Service responsible for handling events.
  */
-sealed abstract class Stats[F[_]] {
-  def getLatestEvents(amount: Int): F[List[Event]]
-  def addEvent(eventStr: String): F[Unit]
+sealed abstract class Stats {
+  def getLatestEvents(amount: Int): IO[List[Event]]
+  def addEvent(eventStr: String): IO[Unit]
 }
 
 object Stats {
-  def make[F[_]: Monad](
-    eventsStore: AtomicCell[F, Seq[Event]]
-  ): Stats[F] =
-    new Stats[F] {
-      def getLatestEvents(amount: Int): F[List[Event]] =
+  def make(
+    eventsStore: AtomicCell[IO, Seq[Event]]
+  ): Stats =
+    new Stats {
+      def getLatestEvents(amount: Int): IO[List[Event]] =
         eventsStore.get.map(_.take(amount).toList)
 
-      def addEvent(eventStr: String): F[Unit] =
+      def addEvent(eventStr: String): IO[Unit] =
         eventsStore.update(read[Event](eventStr) +: _)
     }
 }
