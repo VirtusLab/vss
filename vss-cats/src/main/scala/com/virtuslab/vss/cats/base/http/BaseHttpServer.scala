@@ -17,7 +17,7 @@ object BaseHttpServer:
     EmberServerBuilder
       .default[F]
       .withHostOption(Host.fromString(appConfig.httpHost))
-      .withPort(Port.fromInt(appConfig.httpPort).getOrElse(port"8080"))
+      .withPort(Port.fromInt(appConfig.httpPort).getOrElse(throw new RuntimeException(s"Wrong port ${appConfig.httpPort}}")))
       .withHttpApp(app)
       .build
       .evalTap(printSwaggerMessage[F])

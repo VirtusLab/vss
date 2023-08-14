@@ -1,9 +1,8 @@
 create table hashed_passwords(
-  uuid UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  hash_type VARCHAR NOT NULL,
-  password_hash VARCHAR NOT NULL,
-  UNIQUE (hash_type, password)
+  uuid UUID default gen_random_uuid() primary key,
+  hash_type varchar not null,
+  password_hash varchar not null
 );
 
-CREATE INDEX idx_hashed_passwords_password_hash 
-ON hashed_passwords(password_hash);
+create index idx_hashed_passwords_password_hash 
+on hashed_passwords(password_hash);

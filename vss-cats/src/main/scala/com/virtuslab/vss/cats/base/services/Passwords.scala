@@ -70,33 +70,16 @@ object Passwords {
         .void
     }
 
-    private def getHash(hashType: String, password: String): F[Option[HashedPassword]] = Trace[F].span("getHash") {
-      sql"select hash_type, password_hash from hashed_passwords where hash_type = $hashType and password = $password"
-        .query[(String, String)]
-        .option
-        .transact(transactor)
-        .map(_.map(((hashType, hash) => HashedPassword(hashType, password, hash))))
-    }
-
     private def normalizeHashPassword(hashPassword: HashPassword): HashPassword =
       hashPassword.focus(_.hashType).modify(_.toLowerCase)
 
     override def hashPassword(_hashPassword: HashPassword): F[HashedPassword] = Trace[F].span("hashPassword") {
       val hashPassword = normalizeHashPassword(_hashPassword)
       for {
-        maybeHashedPassword <- getHash(hashPassword.hashType, hashPassword.password)
         _ <- Trace[F].put("hashType" -> hashPassword.hashType, "password" -> hashPassword.password)
-        hashedPassword <- maybeHashedPassword match {
-          case Some(hashedPassword) =>
-            Monad[F].pure(hashedPassword)
-              <* Logger[F].info(s"Using cached hash for hashType = ${hashPassword.hashType} and password = ${hashPassword.password}}")
-          case None =>
-            for {
-              hashAlgorithm <- hashAlgorithm(hashPassword.hashType)
-              hash = hashAlgorithm(hashPassword.password)
-              hashedPassword = HashedPassword(hashPassword.hashType, hashPassword.password, hash)
-            } yield hashedPassword
-          }
+        hashAlgorithm <- hashAlgorithm(hashPassword.hashType)
+        hash = hashAlgorithm(hashPassword.password)
+        hashedPassword = HashedPassword(hashPassword.hashType, hashPassword.password, hash)
         _ <- Trace[F].put("hash" -> hashedPassword.hash)
         _ <- saveHash(hashedPassword)
         _ <- events.publishEvent(Event.HashedPassword(hashPassword.password, hashPassword.hashType))

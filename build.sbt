@@ -61,7 +61,7 @@ lazy val vss_zio = (project in file("vss-zio"))
 val http4sVersion = "0.23.18"
 val fs2Version = "3.6.1"
 val catsEffectVersion = "3.4.8"
-val doobieVersion = "1.0.0-RC2"
+val doobieVersion = "1.0.0-RC4"
 val monocleVersion = "3.2.0"
 
 lazy val vss_cats = project.in(file("vss-cats"))
@@ -70,7 +70,7 @@ lazy val vss_cats = project.in(file("vss-cats"))
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "cats-effect"         % catsEffectVersion,
       "co.fs2"          %% "fs2-core"            % fs2Version,
-      "com.github.fd4s" %% "fs2-kafka"           % "3.0.0-RC1",
+      "com.github.fd4s" %% "fs2-kafka"           % "3.0.1",
       "org.http4s"      %% "http4s-server"       % http4sVersion,
       "org.http4s"      %% "http4s-ember-server" % http4sVersion,
       "org.http4s"      %% "http4s-circe"        % http4sVersion,

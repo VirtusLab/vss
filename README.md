@@ -60,24 +60,26 @@ TODO
 
 ### Run VSS demo app:
 
-VSS Vanilla
-```
-$ sbt "vss_vanilla/runMain com.virtuslab.vss.vanilla.mainVanilla"
+## VSS Vanilla
+
+```sh
+sbt "vss_vanilla/runMain com.virtuslab.vss.vanilla.mainVanilla"
 ```
 
-VSS ZIO
-```
-$ sbt "vss_zio/runMain com.virtuslab.vss.zio.MainZIO"
+## VSS ZIO
+
+```sh
+sbt "vss_zio/runMain com.virtuslab.vss.zio.MainZIO"
 ```
 
-### VSS Cats
+## VSS Cats
 
 VSS Cats
-```
+```sh
 sbt "vss_cats/run"
 ```
 
-### Use it:
+# Use it:
 
 HTTP docs:
 ```

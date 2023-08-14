@@ -15,12 +15,12 @@ final case class StatsRoutes[F[_]: Monad: Async](
 ) extends Http4sDsl[F]:
   val routes: List[ServerEndpoint[Any, F]] =
     List(
-      StatsEndpoints.getEvents.serverLogic[F] { rawPassword =>
+      StatsEndpoints.getLatestEvents.serverLogic[F] { rawPassword =>
         stats.getLatestEvents(100).attempt.map(_.leftMap(_ => ()))
       }
     )
 
   val docsRoutes =
     List(
-      StatsEndpoints.getEvents
+      StatsEndpoints.getLatestEvents
     )
