@@ -21,7 +21,7 @@ object BaseMain:
       GrpcService.layer,
       PasswordService.layer,
       PasswordRepository.layer,
-      DbConnection.layer,
+      Db.layer,
       KafkaProducer.layer,
       Tracer.layer
     )

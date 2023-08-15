@@ -19,12 +19,12 @@ lazy val commons = (project in file("commons"))
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "ch.qos.logback" % "logback-classic" % "1.4.5",
       "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion,
       "com.softwaremill.sttp.tapir" %% "tapir-json-upickle" % tapirVersion,
+      "ch.qos.logback" % "logback-classic" % "1.4.5",
       "commons-codec" % "commons-codec" % "1.15",
-      "com.softwaremill.sttp.client3" %% "upickle" % "3.8.11" % Test,
       "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
+      "com.softwaremill.sttp.client3" %% "upickle" % "3.8.11" % Test,
       "com.softwaremill.sttp.tapir" %% "tapir-sttp-stub-server" % tapirVersion % Test
     )
   )
@@ -57,10 +57,9 @@ lazy val vss_zio = (project in file("vss-zio"))
       "dev.zio" %% "zio" % "2.0.15",
       "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
-      "org.tpolecat" %% "doobie-core" % doobieVersion,
-      "org.tpolecat" %% "doobie-postgres" % doobieVersion,
-      "org.tpolecat" %% "doobie-hikari" % doobieVersion,
-      "dev.zio" %% "zio-interop-cats" % "23.0.03",
+      ("io.getquill" %% "quill-zio" % "4.6.0.1").exclude("com.lihaoyi", "geny_2.13"),
+      ("io.getquill" %% "quill-jdbc-zio" % "4.6.0.1").exclude("com.lihaoyi", "geny_2.13"),
+        "org.postgresql"       %  "postgresql"     % "42.3.1",
       "dev.zio" %% "zio-logging" % "2.1.13",
       "dev.zio" %% "zio-opentracing" % "2.0.3",
       "io.opentracing" % "opentracing-api" % "0.33.0",

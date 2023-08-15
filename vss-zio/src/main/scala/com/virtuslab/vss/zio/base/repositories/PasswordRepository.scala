@@ -1,43 +1,30 @@
 package com.virtuslab.vss.zio.base.repositories
 
 import zio.*
-import doobie.*
-import doobie.implicits.*
-import zio.interop.catz.*
 import com.virtuslab.vss.common.*
-import com.virtuslab.vss.zio.base.resources.Postgres
+import com.virtuslab.vss.zio.base.resources.Db.Schema.*
+import io.getquill.*
+import io.getquill.jdbczio.Quill.Postgres
 
 trait PasswordRepository:
   def saveHash(hashedPassword: HashedPassword): RIO[Scope, Unit]
   def getHash(hashType: String, password: String): RIO[Scope, Option[HashedPassword]]
   def checkPwned(passwordHash: String): RIO[Scope, Boolean]
 
-case class PasswordRepositoryImpl(db: Postgres) extends PasswordRepository:
-
-  override def saveHash(hashedPassword: HashedPassword): RIO[Scope, Unit] = for
-    tx <- db.getTransactor
-    result <- sql"""|insert into hashed_passwords (password, hash_type, password_hash)
-          | values (${hashedPassword.password}, ${hashedPassword.hashType}, ${hashedPassword.hash}) on conflict do nothing""".stripMargin.update.run
-      .transact(tx)
-  yield ()
+case class PasswordRepositoryImpl(db: Postgres[SnakeCase]) extends PasswordRepository:
+  import db._
+  override def saveHash(hashedPassword: HashedPassword): RIO[Scope, Unit] = run(
+    sql"""insert into hashed_passwords (password, hash_type, password_hash) values (${lift(hashedPassword.password)}, ${lift(hashedPassword.hashType)}, ${lift(hashedPassword.hash)}) on conflict do nothing"""
+      .as[Update[Unit]]
+  ).either.unit
 
   override def getHash(hashType: String, password: String): RIO[Scope, Option[HashedPassword]] = for
-    tx <- db.getTransactor
-    result <-
-      sql"select hash_type, password, password_hash from hashed_passwords where hash_type = $hashType and password = $password"
-        .query[HashedPassword]
-        .option
-        .transact(tx)
-  yield result
+    result <- run(sql"select * from hashed_passwords where hash_type = ${lift(hashType)} and password = ${lift(password)}".as[Query[HashedPasswords]])
+  yield result.headOption.map(hp => HashedPassword(hp.hash_type, hp.password, hp.password_hash))
 
   override def checkPwned(passwordHash: String): RIO[Scope, Boolean] = for
-    tx <- db.getTransactor
-    result <- sql"select hash_type from hashed_passwords where password_hash = $passwordHash"
-      .query[String]
-      .to[List]
-      .transact(tx)
-      .map(_.nonEmpty)
-  yield result
+    result <- run(sql"select * from hashed_passwords where password_hash = ${lift(passwordHash)}".as[Query[HashedPasswords]])
+  yield result.nonEmpty
 
 object PasswordRepository:
   val layer = ZLayer.fromFunction(PasswordRepositoryImpl.apply)
