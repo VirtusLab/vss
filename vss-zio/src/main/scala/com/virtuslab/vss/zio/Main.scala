@@ -10,9 +10,8 @@ object Main extends ZIOAppDefault:
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.removeDefaultLoggers >>> consoleLogger()
 
-  override def run: ZIO[Environment & ZIOAppArgs & Scope, Throwable, Any] = for 
+  override def run: ZIO[Environment & ZIOAppArgs & Scope, Throwable, Any] = for
     baseFiber <- BaseMain.run.fork
     statsFiber <- StatsMain.run.fork
     _ <- baseFiber.zip(statsFiber).join
   yield ()
-

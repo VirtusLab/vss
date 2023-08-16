@@ -2,7 +2,7 @@ package com.virtuslab.vss.zio.base.grpc
 
 import com.virtuslab.vss.proto.zio.password.*
 import com.virtuslab.vss.common.*
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.dsl.*
 import zio.*
 import io.grpc.{Status, StatusException}
 import scalapb.UnknownFieldSet

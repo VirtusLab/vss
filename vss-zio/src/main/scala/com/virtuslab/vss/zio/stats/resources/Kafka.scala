@@ -18,11 +18,11 @@ case class KafkaConsumerImpl(consumer: Consumer, eventService: EventService) ext
   override def consume: Stream[Throwable, Nothing] =
     consumer
       .plainStream(Subscription.topics(topicName), Serde.string, Serde.string)
-      .mapZIO { case cr @ CommittableRecord(record, offset) =>
+      .mapZIO { case committableRecord =>
         for
-          event <- ZIO.attempt(read[Event](record.value()))
+          event <- ZIO.attempt(read[Event](committableRecord.record.value()))
           _ <- eventService.saveEvent(event)
-        yield cr
+        yield committableRecord
       }
       .map(_.offset)
       .aggregateAsync(Consumer.offsetBatches)

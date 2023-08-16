@@ -16,7 +16,8 @@ case class GrpcServiceImpl(eventService: EventService) extends GrpcService:
 
   private case class StatsService() extends ZioPassword.StatsService:
     override def listEvents(request: ListEventsRequest): IO[StatusException, ListEventsReponse] =
-      eventService.listEvents()
+      eventService
+        .listEvents()
         .handleError
         .map(result => ListEventsReponse(result.map(_.toGrpc)))
 
