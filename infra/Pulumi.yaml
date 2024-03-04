@@ -1,0 +1,7 @@
+name: vss
+description: VSS infra
+runtime: scala
+config:
+  vss:localRegistry: "localhost:5001"
+  vss:imageName: "vss-cats"
+  vss:imageTag: "0.1.0-SNAPSHOT"
