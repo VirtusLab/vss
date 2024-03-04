@@ -51,8 +51,21 @@ lazy val vss_zio = (project in file("vss-zio"))
       scalapb.zio_grpc.ZioCodeGenerator -> (Compile / sourceManaged).value
     ),
     libraryDependencies ++= Seq(
+      "dev.zio" %% "zio" % "2.0.15",
       "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
-      "com.thesamet.scalapb"        %% "scalapb-runtime-grpc"  % scalapb.compiler.Version.scalapbVersion
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
+      "org.tpolecat" %% "doobie-core" % doobieVersion,
+      "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+      "org.tpolecat" %% "doobie-hikari" % doobieVersion,
+      "dev.zio" %% "zio-interop-cats" % "23.0.03",
+      "dev.zio" %% "zio-logging" % "2.1.13",
+      "dev.zio" %% "zio-opentracing" % "2.0.3",
+      "io.opentracing" % "opentracing-api" % "0.33.0",
+      "io.jaegertracing" % "jaeger-core" % "1.8.0",
+      "io.jaegertracing" % "jaeger-client" % "1.8.0",
+      "io.scalaland" %% "chimney" % "0.8.0-M1",
+      "dev.zio" %% "zio-streams" % "2.0.9",
+      "dev.zio" %% "zio-kafka" % "2.1.1"
     )
   )
   .dependsOn(commons)
