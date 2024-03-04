@@ -48,14 +48,42 @@ Stats Service:
 
 ### Setting up the local environment
 
-Docker compose
-```
+#### Docker compose
+
+```bash
+cd infra
 docker-compose up
 ```
 
-Pulumi
+#### Pulumi
+1. Create local docker registry
+
+```bash
+docker run -d -p 5001:5000 --restart always --name registry registry:2
 ```
-TODO
+2. Publish your vss docker image
+```bash
+sbt vss_cats/docker:publish
+```
+`setupCommonDockerImageConfig()` in build.sbt points to registry on localhost:5001.
+
+3. Create and deploy vss infra
+```bash
+cd infra
+pulumi up --stack vss -y
+```
+if asked to create stack or set passphrase just press ENTER.
+
+4. Connect to the app
+```bash
+k8s get namespaces | grep vss # get vss namespace
+k8s port-forward deployments/vss-app-deployment 8080:8080 -n ${namespace}  # set port forwarding for http
+k8s port-forward deployments/vss-app-deployment 8081:8081 -n ${namespace}  # set port forwarding for grpc 
+```
+5. Delete the deployment
+```bash
+cd infra
+pulumi destroy --stack vss -y
 ```
 
 ### Run VSS demo app:
