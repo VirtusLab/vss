@@ -14,19 +14,19 @@ object HttpApi:
   /**
     * Create the combined routes for the whole application.
     */
-  def make[F[_]: Async](
+  def make[F[_] : Async](
     services: Services[F]
   ): HttpRoutes[F] = {
 
-  val passwordRoutes = StatsRoutes(services.stats)
+    val passwordRoutes = StatsRoutes(services.stats)
 
-  val routes: List[ServerEndpoint[Any, F]] = passwordRoutes.routes
+    val routes: List[ServerEndpoint[Any, F]] = passwordRoutes.routes
 
-  val docsRoutes: List[ServerEndpoint[Any, F]] =
-    SwaggerInterpreter()
-      .fromEndpoints(passwordRoutes.docsRoutes, "vss-stats-cats", "1.0.0")
+    val docsRoutes: List[ServerEndpoint[Any, F]] =
+      SwaggerInterpreter()
+        .fromEndpoints(passwordRoutes.docsRoutes, "vss-stats-cats", "1.0.0")
 
-  val combinedRoutes: List[ServerEndpoint[Any, F]] = routes ++ docsRoutes
+    val combinedRoutes: List[ServerEndpoint[Any, F]] = routes ++ docsRoutes
 
-  Http4sServerInterpreter[F]().toRoutes(combinedRoutes)
-}
+    Http4sServerInterpreter[F]().toRoutes(combinedRoutes)
+  }

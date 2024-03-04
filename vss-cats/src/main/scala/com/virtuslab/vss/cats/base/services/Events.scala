@@ -7,14 +7,14 @@ import upickle.default.*
 import cats.Monad
 
 /**
- * Service responsible for publishing events to Kafka.
- */
+  * Service responsible for publishing events to Kafka.
+  */
 sealed abstract class Events[F[_]] {
   def publishEvent(event: Event): F[Unit]
 }
 
 object Events {
-  def make[F[_]: Monad](
+  def make[F[_] : Monad](
     kafka: KafkaProducer[F, String, String]
   ): Events[F] =
     new Events[F] {

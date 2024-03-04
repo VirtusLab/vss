@@ -11,15 +11,15 @@ import com.virtuslab.vss.cats.base.services.*
 import com.virtuslab.vss.cats.base.config.BaseAppConfig
 import java.net.InetSocketAddress
 import com.google.common.net.InetAddresses
-import natchez.{ Span, Trace }
+import natchez.{Span, Trace}
 
 object BaseGrpcServer:
-  def make[F[_]: Async: Logger: Trace](
+  def make[F[_] : Async : Logger : Trace](
     appConfig: BaseAppConfig,
-    services: Services[F],
+    services: Services[F]
   ): Resource[F, Server] =
     for {
-      hashPasswordGrpcService <- HashPasswordGrpcService.make[F](services.passwords)
+      hashPasswordGrpcService  <- HashPasswordGrpcService.make[F](services.passwords)
       checkPasswordGrpcService <- CheckPasswordGrpcService.make[F](services.passwords)
       server <- NettyServerBuilder
         .forAddress(new InetSocketAddress(InetAddresses.forString(appConfig.grpcHost), appConfig.grpcPort))

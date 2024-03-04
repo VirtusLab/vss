@@ -2,7 +2,7 @@ package com.virtuslab.vss.zio.base.services
 
 import zio.*
 import upickle.default.*
-import com.virtuslab.vss.common.{CheckPwned, CheckedPwned, HashPassword, HashedPassword, Event}
+import com.virtuslab.vss.common.{CheckPwned, CheckedPwned, Event, HashPassword, HashedPassword}
 import org.apache.commons.codec.digest.DigestUtils
 import zio.telemetry.opentracing.OpenTracing
 import com.virtuslab.vss.zio.base.repositories.PasswordRepository

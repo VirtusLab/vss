@@ -10,13 +10,15 @@ import com.virtuslab.vss.cats.base.services.*
 import com.virtuslab.vss.common.*
 
 object CheckPasswordGrpcService {
-  def make[F[_]: Async: Monad](passwords: Passwords[F]): Resource[F, ServerServiceDefinition] =
+  def make[F[_] : Async : Monad](passwords: Passwords[F]): Resource[F, ServerServiceDefinition] =
     PwnedServiceFs2Grpc.bindServiceResource[F](new PwnedServiceFs2Grpc {
       override def checkPwned(request: CheckPwnedRequest, ctx: Metadata): F[CheckPwnedResponse] =
-        passwords.checkPwned(
-          CheckPwned(request.passwordHash)
-        ).map { checkedPassword =>
-          CheckPwnedResponse(request.passwordHash, checkedPassword.pwned)
-        }
+        passwords
+          .checkPwned(
+            CheckPwned(request.passwordHash)
+          )
+          .map { checkedPassword =>
+            CheckPwnedResponse(request.passwordHash, checkedPassword.pwned)
+          }
     })
 }

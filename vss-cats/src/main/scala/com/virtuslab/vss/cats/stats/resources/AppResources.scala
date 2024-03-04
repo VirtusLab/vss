@@ -20,14 +20,15 @@ sealed abstract class AppResources[F[_]](
 )
 
 object AppResources {
+
   /**
     * Creates a new instance of `AppResources` for a given effect type `F`.
-    * 
+    *
     * Instantiates a Kafka consumer and an in-memory store for events.
     */
-  def make[F[_]: Sync: Async: Logger](appConfig: StatsAppConfig): Resource[F, AppResources[F]] = {
+  def make[F[_] : Sync : Async : Logger](appConfig: StatsAppConfig): Resource[F, AppResources[F]] = {
 
-    val kafkaSettings =  
+    val kafkaSettings =
       ConsumerSettings[F, String, String]
         .withAutoOffsetReset(AutoOffsetReset.Earliest)
         .withBootstrapServers(s"${appConfig.kafkaHost}:${appConfig.kafkaPort}")
@@ -35,7 +36,7 @@ object AppResources {
 
     def kafkaResource(): Resource[F, KafkaConsumer[F, String, String]] =
       KafkaConsumer.resource(kafkaSettings)
-    
+
     (
       kafkaResource(),
       Resource.eval(AtomicCell[F].of[Seq[Event]](Seq.empty))

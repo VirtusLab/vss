@@ -10,7 +10,7 @@ import com.virtuslab.vss.cats.stats.services.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.*
 
-final case class StatsRoutes[F[_]: Monad: Async](
+final case class StatsRoutes[F[_] : Monad : Async](
   stats: Stats[F]
 ) extends Http4sDsl[F]:
   val routes: List[ServerEndpoint[Any, F]] =

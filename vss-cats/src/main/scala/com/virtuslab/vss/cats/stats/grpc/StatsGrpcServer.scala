@@ -13,7 +13,7 @@ import java.net.InetSocketAddress
 import com.google.common.net.InetAddresses
 
 object StatsGrpcServer:
-  def make[F[_]: Async](appConfig: StatsAppConfig, services: Services[F]): Resource[F, Server] =
+  def make[F[_] : Async](appConfig: StatsAppConfig, services: Services[F]): Resource[F, Server] =
     for {
       statsGrpcService <- StatsGrpcService.make[F](services.stats)
       server <- NettyServerBuilder

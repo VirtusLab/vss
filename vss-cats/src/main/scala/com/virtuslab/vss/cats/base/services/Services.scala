@@ -14,11 +14,11 @@ sealed abstract class Services[F[_]](
 )
 
 object Services {
-  def make[F[_]: Async: Logger: Trace](
+  def make[F[_] : Async : Logger : Trace](
     transactor: Transactor[F],
     kafka: KafkaProducer[F, String, String]
   ): Services[F] = {
-    val events = Events.make[F](kafka)
+    val events    = Events.make[F](kafka)
     val passwords = Passwords.make[F](transactor, events)
     new Services[F](
       passwords = passwords,

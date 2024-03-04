@@ -9,11 +9,11 @@ import com.virtuslab.vss.zio.base.resources.*
 
 object BaseMain:
   private def app: RIO[Any & HttpService & GrpcService, Unit] = for
-    http <- ZIO.service[HttpService]
+    http       <- ZIO.service[HttpService]
     httpServer <- http.serve().fork
-    grpc <- ZIO.service[GrpcService]
+    grpc       <- ZIO.service[GrpcService]
     grpcServer <- grpc.serve().fork
-    _ <- httpServer.zip(grpcServer).join
+    _          <- httpServer.zip(grpcServer).join
   yield ()
 
   def run: Task[Unit] = app.provide(

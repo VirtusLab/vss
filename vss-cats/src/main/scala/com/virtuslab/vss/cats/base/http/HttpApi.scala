@@ -10,7 +10,7 @@ import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 import org.http4s.HttpRoutes
 import org.http4s.HttpApp
-import natchez.{ Trace, Span }
+import natchez.{Span, Trace}
 import natchez.http4s.NatchezMiddleware
 import natchez.EntryPoint
 import natchez.http4s.implicits.*
@@ -20,10 +20,9 @@ object HttpApi:
   /**
     * Create the combined routes for the whole application.
     *
-    * This is also the place to add any middleware that should be applied to all
-    * routes.
+    * This is also the place to add any middleware that should be applied to all routes.
     */
-  def make[F[_]: Async: Trace](
+  def make[F[_] : Async : Trace](
     services: Services[F]
   ): HttpRoutes[F] = {
     val passwordRoutes = PasswordRoutes(services.passwords)

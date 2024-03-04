@@ -10,10 +10,10 @@ import org.typelevel.log4cats.Logger
 import com.virtuslab.vss.cats.stats.config.StatsAppConfig
 
 object StatsHttpServer:
-  def printSwaggerMessage[F[_]: Logger](server: Server): F[Unit] =
+  def printSwaggerMessage[F[_] : Logger](server: Server): F[Unit] =
     Logger[F].info(s"Go to http:/${server.address}/docs to open SwaggerUI for the Stats service.")
 
-  def make[F[_]: Async: Logger](appConfig: StatsAppConfig, app: HttpApp[F]): Resource[F, Server] =
+  def make[F[_] : Async : Logger](appConfig: StatsAppConfig, app: HttpApp[F]): Resource[F, Server] =
     EmberServerBuilder
       .default[F]
       .withHostOption(Host.fromString(appConfig.httpHost))

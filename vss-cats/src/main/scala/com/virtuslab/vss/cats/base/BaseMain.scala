@@ -14,15 +14,14 @@ import com.virtuslab.vss.cats.base.services.Services
 import com.virtuslab.vss.cats.base.http.HttpApi
 import com.virtuslab.vss.cats.base.config.Config
 import natchez.http4s.implicits.*
-import natchez.{ Span, EntryPoint }
+import natchez.{EntryPoint, Span}
 
 /**
-  * This object is responsible for starting the base application. It loads the
-  * configuration, creates resources and starts the servers.
+  * This object is responsible for starting the base application. It loads the configuration, creates resources and
+  * starts the servers.
   *
-  * Most top-level classes are instantiated with the `IO` effect type. All the
-  * services and resources are instantiated with the `TIO` (short for traced IO)
-  * effect type.
+  * Most top-level classes are instantiated with the `IO` effect type. All the services and resources are instantiated
+  * with the `TIO` (short for traced IO) effect type.
   */
 object BaseMain {
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
@@ -39,24 +38,22 @@ object BaseMain {
   }
 
   /**
-    * This is the main entry point of the application. It instantiates all the
-    * services, resources and servers.
+    * This is the main entry point of the application. It instantiates all the services, resources and servers.
     *
-    * The `for` loop runs in a `Resource` context. This means that all the
-    * resources are released after the application is stopped.
+    * The `for` loop runs in a `Resource` context. This means that all the resources are released after the application
+    * is stopped.
     *
-    * All resources are only started in the `Resource` context. This means that
-    * starting the grpc server does not have to wait until the http server
-    * stops.
+    * All resources are only started in the `Resource` context. This means that starting the grpc server does not have
+    * to wait until the http server stops.
     */
   def run: IO[Unit] = {
     for {
       appConfig <- Resource.eval(Config.load[IO]())
-      ep <- AppResources.makeEntryPoint[IO](appConfig)
-      rootSpan <- ep.root("root")
-      res <- AppResources.make[TIO](appConfig).mapK(fromTraceK(rootSpan))
+      ep        <- AppResources.makeEntryPoint[IO](appConfig)
+      rootSpan  <- ep.root("root")
+      res       <- AppResources.make[TIO](appConfig).mapK(fromTraceK(rootSpan))
       services = Services.make[TIO](res.db, res.kafka)
-      httpApi = ep.liftT(HttpApi.make(services))
+      httpApi  = ep.liftT(HttpApi.make(services))
       _ <- BaseHttpServer.make[IO](appConfig, httpApi.orNotFound)
       _ <- BaseGrpcServer.make[TIO](appConfig, services).mapK(fromTraceK(rootSpan))
     } yield ()

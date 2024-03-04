@@ -12,5 +12,5 @@ case class BaseAppConfig(
   postgresPassword: String,
   kafkaHost: String,
   kafkaPort: Int,
-  jaegerUri: String,
+  jaegerUri: String
 )

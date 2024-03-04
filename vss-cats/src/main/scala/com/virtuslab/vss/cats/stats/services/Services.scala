@@ -14,7 +14,7 @@ sealed abstract class Services[F[_]](
 )
 
 object Services {
-  def make[F[_]: Async: Logger](
+  def make[F[_] : Async : Logger](
     eventsStore: AtomicCell[F, Seq[Event]]
   ): Services[F] = {
     val stats = Stats.make[F](eventsStore)

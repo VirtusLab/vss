@@ -21,7 +21,7 @@ case class KafkaConsumerImpl(consumer: Consumer, eventService: EventService) ext
       .mapZIO { case committableRecord =>
         for
           event <- ZIO.attempt(read[Event](committableRecord.record.value()))
-          _ <- eventService.saveEvent(event)
+          _     <- eventService.saveEvent(event)
         yield committableRecord
       }
       .map(_.offset)

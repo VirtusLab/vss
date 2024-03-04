@@ -14,8 +14,8 @@ object Tracer {
 
   def layer: TaskLayer[OpenTracing] = ZLayer.scoped {
     for
-      config <- ZIO.config(JaegerConfig.config)
-      tracer <- makeTracer(config.uri, "vss")
+      config      <- ZIO.config(JaegerConfig.config)
+      tracer      <- makeTracer(config.uri, "vss")
       openTracing <- OpenTracing.scoped(tracer, "ROOT")
     yield openTracing
   }

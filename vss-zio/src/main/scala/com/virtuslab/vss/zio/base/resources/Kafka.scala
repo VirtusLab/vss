@@ -11,7 +11,7 @@ trait KafkaProducer:
 
 case class KafkaProducerImpl(producer: Producer) extends KafkaProducer:
   private val topicName = "events"
-  private val key = "event"
+  private val key       = "event"
 
   override def produce(value: String): Task[RecordMetadata] =
     producer.produce[Any, String, String](

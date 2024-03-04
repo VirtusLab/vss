@@ -19,7 +19,7 @@ case class HttpServiceImpl(passwordService: PasswordService, tracing: OpenTracin
   override def serve(): Task[Unit] = for
     config <- ZIO.config(HttpConfig.config)
     serverConfigLayer = ServerConfig.live(ServerConfig.default.port(config.port))
-    serverLayer = serverConfigLayer >>> Server.live
+    serverLayer       = serverConfigLayer >>> Server.live
     _ <- ZIO.logInfo(
       s"Go to http:/${config.host}:${config.port}/docs to open SwaggerUI for the Base service."
     )

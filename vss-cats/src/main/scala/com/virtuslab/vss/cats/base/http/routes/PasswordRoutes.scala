@@ -12,7 +12,7 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.*
 import natchez.Trace
 
-final case class PasswordRoutes[F[_]: Monad: Async: Trace](
+final case class PasswordRoutes[F[_] : Monad : Async : Trace](
   passwords: Passwords[F]
 ) extends Http4sDsl[F]:
   val routes: List[ServerEndpoint[Any, F]] =
@@ -24,7 +24,7 @@ final case class PasswordRoutes[F[_]: Monad: Async: Trace](
         passwords.checkPwned(checkData)
       }
     )
-  
+
   val docsRoutes: List[AnyEndpoint] =
     List(
       BaseEndpoints.hashPasswordEndpoint,

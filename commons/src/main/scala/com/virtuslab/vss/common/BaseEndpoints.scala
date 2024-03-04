@@ -10,14 +10,19 @@ object BaseEndpoints:
   val checkPasswordEndpoint: PublicEndpoint[CheckPwned, Unit, CheckedPwned, Any] = endpoint.post
     .in("check")
     .in(jsonBody[CheckPwned].example(CheckPwned("5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8")))
-    .out(jsonBody[CheckedPwned].example(CheckedPwned("5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", true)))
+    .out(
+      jsonBody[CheckedPwned]
+        .example(CheckedPwned("5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", true))
+    )
 
   val hashPasswordEndpoint: PublicEndpoint[HashPassword, Unit, HashedPassword, Any] = endpoint.post
     .in("hash")
     .in(jsonBody[HashPassword].example(HashPassword("SHA256", "password")))
     .out(
       jsonBody[HashedPassword]
-        .example(HashedPassword("SHA256", "password", "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"))
+        .example(
+          HashedPassword("SHA256", "password", "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8")
+        )
     )
 
 case class CheckPwned(passwordHash: String)

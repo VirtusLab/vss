@@ -16,7 +16,7 @@ case class HttpServiceImpl(eventService: EventService) extends HttpService:
   override def serve(): Task[Unit] = for
     config <- ZIO.config(HttpConfig.config)
     serverConfigLayer = ServerConfig.live(ServerConfig.default.port(config.port))
-    serverLayer = serverConfigLayer >>> Server.live
+    serverLayer       = serverConfigLayer >>> Server.live
     _ <- ZIO.logInfo(
       s"Go to http:/${config.host}:${config.port}/docs to open SwaggerUI for the Base service."
     )
@@ -24,7 +24,7 @@ case class HttpServiceImpl(eventService: EventService) extends HttpService:
   yield ()
 
   private val getAllEvents: ZServerEndpoint[Any, Any] =
-    StatsEndpoints.getAllEvents.zServerLogic[Any](_ => eventService.listEvents().mapError(_ => ()))
+    StatsEndpoints.getLatestEvents.zServerLogic[Any](_ => eventService.listEvents().mapError(_ => ()))
 
   private val docs: List[ZServerEndpoint[Any, Any]] = SwaggerInterpreter()
     .fromServerEndpoints[Task](List(getAllEvents), "vss-zio", "1.0.0")

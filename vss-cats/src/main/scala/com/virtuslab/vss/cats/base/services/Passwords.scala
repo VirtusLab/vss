@@ -15,11 +15,10 @@ import natchez.Trace
 /**
   * Service (algebra) for password hashing and checking if password was pwned.
   *
-  * The logic related to password hashing and checking if password was pwned is
-  * implemented in this service.
+  * The logic related to password hashing and checking if password was pwned is implemented in this service.
   *
-  * Note that the declaration of `Passwords` does not have any typeclass
-  * constraints. They are only present in the implementation.
+  * Note that the declaration of `Passwords` does not have any typeclass constraints. They are only present in the
+  * implementation.
   */
 sealed abstract class Passwords[F[_]] {
   def checkPwned(checkPassword: CheckPwned): F[CheckedPwned]
@@ -27,14 +26,17 @@ sealed abstract class Passwords[F[_]] {
 }
 
 object Passwords {
+
   /**
     * The implementation of `Passwords` service.
     *
-    * @param transactor Transactor from `doobie` library, allows to execute SQL queries
-    * @param events Service responsible for publishing events
+    * @param transactor
+    *   Transactor from `doobie` library, allows to execute SQL queries
+    * @param events
+    *   Service responsible for publishing events
     * @return
     */
-  def make[F[_]: MonadThrow: MonadCancelThrow: Logger: Trace](
+  def make[F[_] : MonadThrow : MonadCancelThrow : Logger : Trace](
     transactor: Transactor[F],
     events: Events[F]
   ): Passwords[F] = new Passwords[F] {
@@ -50,8 +52,8 @@ object Passwords {
     override def checkPwned(checkPwned: CheckPwned): F[CheckedPwned] = Trace[F].span("checkPwned") {
       for {
         pwnd <- doCheckPwned(checkPwned.passwordHash).map(CheckedPwned.apply(checkPwned.passwordHash, _))
-        _ <- Trace[F].put("passwordHash" -> checkPwned.passwordHash, "pwnd" -> pwnd.toString)
-        _ <- events.publishEvent(Event.CheckedPwned(checkPwned.passwordHash))
+        _    <- Trace[F].put("passwordHash" -> checkPwned.passwordHash, "pwnd" -> pwnd.toString)
+        _    <- events.publishEvent(Event.CheckedPwned(checkPwned.passwordHash))
       } yield pwnd
     }
 
@@ -63,9 +65,7 @@ object Passwords {
 
     private def saveHash(hashedPassword: HashedPassword): F[Unit] = Trace[F].span("saveHash") {
       sql"""|insert into hashed_passwords (hash_type, password_hash)
-            | values (${hashedPassword.hashType}, ${hashedPassword.hash}) on conflict do nothing""".stripMargin
-        .update
-        .run
+            | values (${hashedPassword.hashType}, ${hashedPassword.hash}) on conflict do nothing""".stripMargin.update.run
         .transact(transactor)
         .void
     }
@@ -76,9 +76,9 @@ object Passwords {
     override def hashPassword(_hashPassword: HashPassword): F[HashedPassword] = Trace[F].span("hashPassword") {
       val hashPassword = normalizeHashPassword(_hashPassword)
       for {
-        _ <- Trace[F].put("hashType" -> hashPassword.hashType, "password" -> hashPassword.password)
+        _             <- Trace[F].put("hashType" -> hashPassword.hashType, "password" -> hashPassword.password)
         hashAlgorithm <- hashAlgorithm(hashPassword.hashType)
-        hash = hashAlgorithm(hashPassword.password)
+        hash           = hashAlgorithm(hashPassword.password)
         hashedPassword = HashedPassword(hashPassword.hashType, hashPassword.password, hash)
         _ <- Trace[F].put("hash" -> hashedPassword.hash)
         _ <- saveHash(hashedPassword)

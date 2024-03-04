@@ -15,11 +15,11 @@ import scala.util.Failure
 import scala.util.Success
 
 @main def mainVanilla(): Unit =
-  val httpPort = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
+  val httpPort   = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
   val httpServer = new VanillaHttpServer().runHttpServer(httpPort)
   println(s"Go to http://localhost:$httpPort/docs to open SwaggerUI")
 
-  val grpcPort = sys.env.get("GRPC_PORT").flatMap(_.toIntOption).getOrElse(8181)
+  val grpcPort   = sys.env.get("GRPC_PORT").flatMap(_.toIntOption).getOrElse(8181)
   val grpcServer = new VanillaGrpcServer().runGrpcServer(grpcPort)
   println(s"GRPC server is up and running at http://localhost:$grpcPort/ to open SwaggerUI")
 

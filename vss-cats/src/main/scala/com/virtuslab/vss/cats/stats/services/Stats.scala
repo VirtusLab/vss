@@ -9,15 +9,15 @@ import cats.Monad
 import cats.effect.std.AtomicCell
 
 /**
- * Service responsible for handling events.
- */
+  * Service responsible for handling events.
+  */
 sealed abstract class Stats[F[_]] {
   def getLatestEvents(amount: Int): F[List[Event]]
   def addEvent(eventStr: String): F[Unit]
 }
 
 object Stats {
-  def make[F[_]: Monad](
+  def make[F[_] : Monad](
     eventsStore: AtomicCell[F, Seq[Event]]
   ): Stats[F] =
     new Stats[F] {
