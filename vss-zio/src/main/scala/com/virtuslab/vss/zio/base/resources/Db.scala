@@ -1,10 +1,10 @@
 package com.virtuslab.vss.zio.base.resources
 
+import zio.*
 import com.virtuslab.vss.zio.base.config.DbConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.getquill.*
 import io.getquill.jdbczio.Quill.Postgres
-import zio.*
 import java.util.UUID
 
 object Db:

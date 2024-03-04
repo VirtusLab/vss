@@ -1,15 +1,13 @@
 package com.virtuslab.vss.zio.base.services
 
-import com.virtuslab.vss.common.{CheckPwned, CheckedPwned, HashPassword, HashedPassword}
 import zio.*
 import upickle.default.*
+import com.virtuslab.vss.common.{CheckPwned, CheckedPwned, HashPassword, HashedPassword, Event}
 import org.apache.commons.codec.digest.DigestUtils
-import com.virtuslab.vss.common.Event
 import zio.telemetry.opentracing.OpenTracing
+import com.virtuslab.vss.zio.base.repositories.PasswordRepository
 import com.virtuslab.vss.zio.base.resources.TracingOps.*
 import com.virtuslab.vss.zio.base.resources.*
-import com.virtuslab.vss.zio.base.repositories.PasswordRepository
-import com.virtuslab.vss.zio.base.resources.TracingOps
 
 trait PasswordService:
   def checkPwned(checkPassword: CheckPwned): Task[CheckedPwned]

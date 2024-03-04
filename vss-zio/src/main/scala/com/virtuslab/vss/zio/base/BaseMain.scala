@@ -17,11 +17,11 @@ object BaseMain:
   yield ()
 
   def run: Task[Unit] = app.provide(
-      HttpService.layer,
-      GrpcService.layer,
-      PasswordService.layer,
-      PasswordRepository.layer,
-      Db.layer,
-      KafkaProducer.layer,
-      Tracer.layer
-    )
+    HttpService.layer,
+    GrpcService.layer,
+    PasswordService.layer,
+    PasswordRepository.layer,
+    Db.layer,
+    KafkaProducer.layer,
+    Tracer.layer
+  )

@@ -43,6 +43,10 @@ lazy val vss_vanilla = (project in file("vss-vanilla"))
   )
   .dependsOn(commons)
 
+val jaegerVersion = "1.8.0"
+val quillVersion = "4.6.0.1"
+val zioVersion = "2.0.15"
+
 lazy val vss_zio = (project in file("vss-zio"))
   .settings(commonSettings)
   .settings(
@@ -51,20 +55,20 @@ lazy val vss_zio = (project in file("vss-zio"))
       scalapb.zio_grpc.ZioCodeGenerator -> (Compile / sourceManaged).value
     ),
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % "2.0.15",
-      "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
-      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
-      ("io.getquill" %% "quill-zio" % "4.6.0.1").exclude("com.lihaoyi", "geny_2.13"),
-      ("io.getquill" %% "quill-jdbc-zio" % "4.6.0.1").exclude("com.lihaoyi", "geny_2.13"),
-      "org.postgresql"       %  "postgresql"     % "42.3.1",
-      "dev.zio" %% "zio-logging" % "2.1.13",
+      "dev.zio" %% "zio" % zioVersion,
+      "dev.zio" %% "zio-streams" % zioVersion,
+      "dev.zio" %% "zio-kafka" % "2.4.2",
+      "dev.zio" %% "zio-logging" % "2.1.14",
       "dev.zio" %% "zio-opentracing" % "2.0.3",
       "io.opentracing" % "opentracing-api" % "0.33.0",
-      "io.jaegertracing" % "jaeger-core" % "1.8.0",
-      "io.jaegertracing" % "jaeger-client" % "1.8.0",
+      "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
+      "org.postgresql" % "postgresql" % "42.3.1",
       "io.scalaland" %% "chimney" % "0.8.0-M1",
-      "dev.zio" %% "zio-streams" % "2.0.9",
-      "dev.zio" %% "zio-kafka" % "2.1.1"
+      "io.jaegertracing" % "jaeger-core" % jaegerVersion,
+      "io.jaegertracing" % "jaeger-client" % jaegerVersion,
+      ("io.getquill" %% "quill-zio" % quillVersion).exclude("com.lihaoyi", "geny_2.13"),
+      ("io.getquill" %% "quill-jdbc-zio" % quillVersion).exclude("com.lihaoyi", "geny_2.13")
     )
   )
   .dependsOn(commons)

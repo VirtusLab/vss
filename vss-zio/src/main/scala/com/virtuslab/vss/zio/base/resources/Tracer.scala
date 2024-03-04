@@ -35,7 +35,6 @@ object Tracer {
     } yield tracer
 }
 
-
 object TracingOps:
   extension [R, E, A](zio: ZIO[R, E, A])
     def span(openTracing: OpenTracing, name: String) =

@@ -7,10 +7,10 @@ import sttp.tapir.ztapir.*
 import zio.http.{HttpApp, Server, ServerConfig}
 import com.virtuslab.vss.zio.base.services.PasswordService
 import com.virtuslab.vss.zio.base.resources.TracingOps.*
+import com.virtuslab.vss.zio.base.resources.TracingOps
+import com.virtuslab.vss.zio.base.config.HttpConfig
 import zio.telemetry.opentracing.OpenTracing
 import com.virtuslab.vss.common.{BaseEndpoints, HashAlgorithm, HashedPassword}
-import com.virtuslab.vss.zio.base.config.HttpConfig
-import com.virtuslab.vss.zio.base.resources.TracingOps
 
 trait HttpService:
   def serve(): Task[Unit]

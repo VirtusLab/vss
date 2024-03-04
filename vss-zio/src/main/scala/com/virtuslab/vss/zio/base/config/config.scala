@@ -1,6 +1,6 @@
 package com.virtuslab.vss.zio.base.config
 
-import zio._
+import zio.*
 
 case class HttpConfig(host: String, port: Int)
 object HttpConfig:
@@ -41,4 +41,5 @@ object KafkaConfig:
 
 case class JaegerConfig(uri: String)
 object JaegerConfig:
-  val config: Config[JaegerConfig] = Config.string("JEAGER_URI").withDefault("http://localhost:6831").map(JaegerConfig.apply)
+  val config: Config[JaegerConfig] =
+    Config.string("JEAGER_URI").withDefault("http://localhost:6831").map(JaegerConfig.apply)

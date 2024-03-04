@@ -8,10 +8,10 @@ import com.virtuslab.vss.common.{CheckPwned, HashPassword}
 import com.virtuslab.vss.proto.zio.password.*
 import com.virtuslab.vss.zio.base.services.PasswordService
 import com.virtuslab.vss.zio.base.resources.TracingOps.*
+import com.virtuslab.vss.zio.base.resources.TracingOps
 import com.virtuslab.vss.zio.base.config.GrpcConfig
 import zio.telemetry.opentracing.OpenTracing
 import GrpcOps.*
-import com.virtuslab.vss.zio.base.resources.TracingOps
 
 trait GrpcService:
   def serve(): Task[Unit]
