@@ -1,15 +1,14 @@
 package com.virtuslab.vss.vanilla
 
-import com.virtuslab.vss.common.{HashAlgorithm, HashPasswordHttpEndpoints, HashedPassword}
 import sttp.tapir.server.netty.NettyFutureServer
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import com.virtuslab.vss.common.*
 
 object VanillaEndpoints:
 
-  private val passwordServerEndpoint = HashPasswordHttpEndpoints.hashPasswordEndpoint.serverLogicSuccess(rawPassword =>
+  private val passwordServerEndpoint = BaseEndpoints.hashPasswordEndpoint.serverLogicSuccess(rawPassword =>
     Future.successful(
       HashedPassword(rawPassword.hashType, rawPassword.password, HashAlgorithm.hash(rawPassword.password))
     )
