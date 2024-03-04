@@ -91,5 +91,23 @@ lazy val vss_cats = project
       "io.grpc"                      % "grpc-netty-shaded"   % scalapb.compiler.Version.grpcJavaVersion
     )
   )
-  .enablePlugins(Fs2Grpc)
+  .enablePlugins(DockerPlugin, JavaAppPackaging, Fs2Grpc)
   .dependsOn(commons)
+
+lazy val infra = project
+  .in(file("infra"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.virtuslab" %% "besom-kubernetes" % "0.0.1-SNAPSHOT",
+      "org.virtuslab" %% "besom-core"       % "0.0.1-SNAPSHOT"
+    )
+  )
+
+def setupCommonDockerImageConfig(project: Project): Project =
+  project
+    .settings(
+      dockerRepository := Some("localhost:5001"),
+      dockerBaseImage := "eclipse-temurin:11.0.16.1_1-jdk-focal",
+      Docker / aggregate := false,
+      Compile / packageDoc / publishArtifact := false
+    )

@@ -76,9 +76,9 @@ if asked to create stack or set passphrase just press ENTER.
 
 4. Connect to the app
 ```bash
-k8s get namespaces | grep vss # get vss namespace
-k8s port-forward deployments/vss-app-deployment 8080:8080 -n ${namespace}  # set port forwarding for http
-k8s port-forward deployments/vss-app-deployment 8081:8081 -n ${namespace}  # set port forwarding for grpc 
+kubectl get namespaces | grep vss # get vss namespace
+kubectl port-forward deployments/vss-app-deployment 8080:8080 -n ${namespace}  # set port forwarding for http
+kubectl port-forward deployments/vss-app-deployment 8081:8081 -n ${namespace}  # set port forwarding for grpc 
 ```
 5. Delete the deployment
 ```bash

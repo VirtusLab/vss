@@ -1,5 +1,3 @@
-//> using dep "org.virtuslab::besom-kubernetes:0.0.1-SNAPSHOT"
-
 import besom.*
 import besom.api.kubernetes as k8s
 import besom.internal.Output
@@ -7,7 +5,6 @@ import k8s.core.v1.{Service, namespace}
 import besom.internal.Config
 
 @main def main = Pulumi.run {
-  // something is wrong here it should take the config name.
   val conf = config
   for
     appNamespace <- namespace(name = "vss")
