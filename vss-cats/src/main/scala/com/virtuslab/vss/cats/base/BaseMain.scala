@@ -7,6 +7,7 @@ import cats.arrow.FunctionK
 import cats.effect.std.Supervisor
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
+// import scribe.cats.*
 import com.virtuslab.vss.cats.base.resources.*
 import com.virtuslab.vss.cats.base.http.BaseHttpServer
 import com.virtuslab.vss.cats.base.grpc.BaseGrpcServer

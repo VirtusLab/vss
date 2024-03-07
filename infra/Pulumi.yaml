@@ -3,5 +3,5 @@ description: VSS infra
 runtime: scala
 config:
   vss:localRegistry: "localhost:5001"
-  vss:imageName: "vss-cats"
+  vss:imageName: "vss-zio"
   vss:imageTag: "0.1.0-SNAPSHOT"

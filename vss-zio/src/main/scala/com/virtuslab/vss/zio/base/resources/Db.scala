@@ -19,7 +19,7 @@ object Db:
   def getDataSource: ZIO[Any, Throwable, HikariDataSource] = for
     config <- ZIO.config(DbConfig.config)
     ds <- ZIO.attempt {
-      val ds = new HikariDataSource()
+      val ds = HikariDataSource()
       ds.setJdbcUrl(s"jdbc:postgresql://${config.postgresHost}:${config.postgresPort}/${config.dbName}")
       ds.setUsername(config.postgresUser)
       ds.setPassword(config.postgresPassword)
@@ -28,4 +28,4 @@ object Db:
   yield ds
 
   object Schema:
-    case class HashedPasswords(uuid: UUID, password: String, hash_type: String, password_hash: String)
+    case class HashedPasswords(uuid: UUID, hash_type: String, password_hash: String)

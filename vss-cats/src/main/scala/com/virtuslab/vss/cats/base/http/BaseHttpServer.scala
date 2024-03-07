@@ -7,6 +7,7 @@ import org.http4s.server.Server
 import cats.effect.kernel.Async
 import org.http4s.ember.server.EmberServerBuilder
 import org.typelevel.log4cats.Logger
+// import scribe.cats.*
 import com.virtuslab.vss.cats.base.config.BaseAppConfig
 
 object BaseHttpServer:

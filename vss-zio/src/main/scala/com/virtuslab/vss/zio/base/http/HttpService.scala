@@ -27,13 +27,14 @@ case class HttpServiceImpl(passwordService: PasswordService, tracing: OpenTracin
   yield ()
 
   private val hashPasswordEndpoint: ZServerEndpoint[Any, Any] =
-    BaseEndpoints.hashPasswordEndpoint.zServerLogic[Any](rawPassword =>
-      passwordService.hashPassword(rawPassword).mapError(_ => ()).root(tracing, "hash password http")
-    )
+    BaseEndpoints.hashPasswordEndpoint.zServerLogic[Any] { rawPassword =>
+      ZIO.logInfo(s"Got hash request: $rawPassword") *>
+        passwordService.hashPassword(rawPassword).orDie.root(tracing, "hash password http")
+    }
 
   private val checkPwnedEndpoint: ZServerEndpoint[Any, Any] =
     BaseEndpoints.checkPasswordEndpoint.zServerLogic[Any](checkData =>
-      passwordService.checkPwned(checkData).mapError(_ => ()).root(tracing, "check pwned http")
+      passwordService.checkPwned(checkData).orDie.root(tracing, "check pwned http")
     )
 
   private val docs: List[ZServerEndpoint[Any, Any]] = SwaggerInterpreter()

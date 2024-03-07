@@ -15,6 +15,7 @@ object Tracer {
   def layer: TaskLayer[OpenTracing] = ZLayer.scoped {
     for
       config      <- ZIO.config(JaegerConfig.config)
+      _           <- ZIO.logInfo(s"Creating Jaeger tracer for ${config.uri}")
       tracer      <- makeTracer(config.uri, "vss")
       openTracing <- OpenTracing.scoped(tracer, "ROOT")
     yield openTracing
@@ -25,10 +26,10 @@ object Tracer {
       parsedURI <- ZIO.attempt(new URI(uri))
       (host, port) = (parsedURI.getHost(), parsedURI.getPort())
       tracer <- ZIO.attempt(
-        new Configuration(serviceName).getTracerBuilder
-          .withSampler(new ConstSampler(true))
+        Configuration(serviceName).getTracerBuilder
+          .withSampler(ConstSampler(true))
           .withReporter(
-            new RemoteReporter.Builder().withSender(new UdpSender(host, port, 0)).build()
+            RemoteReporter.Builder().withSender(UdpSender(host, port, 0)).build()
           )
           .build()
       )
@@ -37,9 +38,9 @@ object Tracer {
 
 object TracingOps:
   extension [R, E, A](zio: ZIO[R, E, A])
-    def span(openTracing: OpenTracing, name: String) =
+    def span(openTracing: OpenTracing, name: String): ZIO[R, E, A] =
       openTracing.span(zio, name, tagError = true, logError = true)
-    def root(openTracing: OpenTracing, name: String) =
+    def root(openTracing: OpenTracing, name: String): ZIO[R, E, A] =
       openTracing.root(zio, name, tagError = true, logError = true)
     def tagMultiple(openTracing: OpenTracing, tags: Map[String, String]): ZIO[R, E, A] =
       tags

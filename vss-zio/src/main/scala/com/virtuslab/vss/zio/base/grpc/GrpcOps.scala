@@ -8,7 +8,8 @@ import io.grpc.{Status, StatusException}
 import scalapb.UnknownFieldSet
 
 object GrpcOps:
-  extension [R, E, A](zio: ZIO[R, E, A]) def handleError = zio.mapError(_ => StatusException(Status.INTERNAL))
+  extension [R, E, A](zio: ZIO[R, E, A])
+    def handleError: ZIO[R, StatusException, A] = zio.orElseFail(StatusException(Status.INTERNAL))
 
   extension (grpc: HashPasswordRequest) def toDomain: HashPassword = grpc.into[HashPassword].transform
 

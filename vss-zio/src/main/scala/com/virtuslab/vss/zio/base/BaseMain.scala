@@ -8,12 +8,10 @@ import com.virtuslab.vss.zio.base.repositories.PasswordRepository
 import com.virtuslab.vss.zio.base.resources.*
 
 object BaseMain:
-  private def app: RIO[Any & HttpService & GrpcService, Unit] = for
-    http       <- ZIO.service[HttpService]
-    httpServer <- http.serve().fork
-    grpc       <- ZIO.service[GrpcService]
-    grpcServer <- grpc.serve().fork
-    _          <- httpServer.zip(grpcServer).join
+  private def app: RIO[HttpService & GrpcService, Unit] = for
+    http <- ZIO.service[HttpService]
+    grpc <- ZIO.service[GrpcService]
+    _    <- ZIO.collectAllParDiscard(Vector(http.serve(), grpc.serve()))
   yield ()
 
   def run: Task[Unit] = app.provide(

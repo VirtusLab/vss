@@ -9,7 +9,7 @@ VSS bootstrap enables generating full non-trivial scala backend app together wit
 
 ## Why did we create VSS bootstrap?
 
-Scala has many great libraries and it is not a trivial task to find the best subset for your project. The same problem is also visible with many ways of providing an infrastructure layer. 
+Scala has many great libraries, and it is not a trivial task to find the best subset for your project. The same problem is also visible with many ways of providing an infrastructure layer. 
 These two things together generate unnecessary traction, harm time to market, and cause problems with maintaining the solution (wrong set of libraries, multiple ways to do the same thing).
 VSS bootstrap enables jump-start the new project and building quickly valuable complete solution, solution easy to maintain in the long run.
 

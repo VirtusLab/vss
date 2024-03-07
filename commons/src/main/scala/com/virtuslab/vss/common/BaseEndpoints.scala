@@ -2,8 +2,9 @@ package com.virtuslab.vss.common
 
 import sttp.tapir.*
 import sttp.tapir.generic.auto.*
-import sttp.tapir.json.upickle.*
-import upickle.default.*
+import sttp.tapir.json.jsoniter.*
+import com.github.plokhotnyuk.jsoniter_scala.macros.*
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 
 object BaseEndpoints:
 
@@ -12,7 +13,7 @@ object BaseEndpoints:
     .in(jsonBody[CheckPwned].example(CheckPwned("5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8")))
     .out(
       jsonBody[CheckedPwned]
-        .example(CheckedPwned("5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", true))
+        .example(CheckedPwned("5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", true, Some(1)))
     )
 
   val hashPasswordEndpoint: PublicEndpoint[HashPassword, Unit, HashedPassword, Any] = endpoint.post
@@ -27,16 +28,16 @@ object BaseEndpoints:
 
 case class CheckPwned(passwordHash: String)
 object CheckPwned:
-  given ReadWriter[CheckPwned] = macroRW
+  given JsonValueCodec[CheckPwned] = JsonCodecMaker.make
 
-case class CheckedPwned(passwordHash: String, pwned: Boolean)
+case class CheckedPwned(passwordHash: String, pwned: Boolean, occurrences: Option[Long])
 object CheckedPwned:
-  given ReadWriter[CheckedPwned] = macroRW
+  given JsonValueCodec[CheckedPwned] = JsonCodecMaker.make
 
 case class HashPassword(hashType: String, password: String)
 object HashPassword:
-  given ReadWriter[HashPassword] = macroRW
+  given JsonValueCodec[HashPassword] = JsonCodecMaker.make
 
 case class HashedPassword(hashType: String, password: String, hash: String)
 object HashedPassword:
-  given ReadWriter[HashedPassword] = macroRW
+  given JsonValueCodec[HashedPassword] = JsonCodecMaker.make

@@ -1,27 +1,32 @@
 import besom.*
-import besom.api.kubernetes.core.v1.{Service, namespace}
+import besom.api.kubernetes.core.v1.{Namespace, Service}
 import besom.internal.{Config, Output}
 
 @main def main = Pulumi.run {
-  val conf = config
-  for
-    appNamespace <- namespace(name = "vss")
-    // zookeeper
-    zooDeployment <- Zookeeper.deploy(appNamespace)
-    zooService    <- Zookeeper.deployService(appNamespace)
-    // kafka
-    kafkaDeployment <- Kafka.deploy(appNamespace, zooService)
-    kafkaService    <- Kafka.deployService(appNamespace)
-    // postgres
-    postgresDeployment <- Postgres.deploy(appNamespace)
-    postgresService    <- Postgres.deployService(appNamespace)
-    // jaeger
-    jaegerDeployment <- Jaeger.deploy(appNamespace)
-    jaegerService    <- Jaeger.deployService(appNamespace)
-    // vss
-    vssDeployment <- VSS.deploy(conf, appNamespace, postgresService, kafkaService, jaegerService)
-    vssService    <- VSS.deployService(appNamespace)
-  yield Pulumi.exports(
+
+  val appNamespace = Namespace(name = "vss")
+
+  // zookeeper
+  val zooDeployment = Zookeeper.deploy(appNamespace)
+  val zooService    = Zookeeper.deployService(appNamespace)
+
+  // kafka
+  val kafkaDeployment = Kafka.deploy(appNamespace, zooService)
+  val kafkaService    = Kafka.deployService(appNamespace)
+
+  // postgres
+  val postgresDeployment = Postgres.deploy(appNamespace)
+  val postgresService    = Postgres.deployService(appNamespace)
+
+  // jaeger
+  val jaegerDeployment = Jaeger.deploy(appNamespace)
+  val jaegerService    = Jaeger.deployService(appNamespace)
+
+  // vss
+  val vssDeployment = VSS.deploy(config, appNamespace, postgresService, kafkaService, jaegerService)
+  val vssService    = VSS.deployService(appNamespace)
+
+  Stack.exports(
     namespaceName = appNamespace.metadata.name,
     zookeeperDeploymentName = zooDeployment.metadata.name,
     zookeeperServiceName = zooService.metadata.name,

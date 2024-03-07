@@ -7,7 +7,9 @@ import com.virtuslab.vss.proto.zio.password.{Event => GrpcEvent}
 import com.virtuslab.vss.common.{Event => ScalaEvent}
 
 object GrpcOps:
-  extension [R, E, A](zio: ZIO[R, E, A]) def handleError = zio.mapError(_ => StatusException(Status.INTERNAL))
+  extension [R, E, A](zio: ZIO[R, E, A])
+    def handleError: ZIO[R, StatusException, A] =
+      zio.orElseFail(StatusException(Status.INTERNAL))
 
   extension (dto: ScalaEvent)
     def toGrpc: GrpcEvent = dto match

@@ -1,14 +1,12 @@
 package com.virtuslab.vss.common
 
-import upickle.default.*
+import com.github.plokhotnyuk.jsoniter_scala.macros.*
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 
 enum Event:
   case HashedPassword(password: String, hashType: String)
   case CheckedPwned(passwordHash: String)
 
-object Event {
-  given ReadWriter[Event] = ReadWriter.merge(
-    macroRW[Event.HashedPassword],
-    macroRW[Event.CheckedPwned]
-  )
-}
+object Event:
+  given JsonValueCodec[List[Event]] = JsonCodecMaker.make
+  given JsonValueCodec[Event]       = JsonCodecMaker.make

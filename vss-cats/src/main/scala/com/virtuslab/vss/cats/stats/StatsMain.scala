@@ -1,6 +1,5 @@
 package com.virtuslab.vss.cats.stats
 
-import upickle.default.*
 import cats.effect.*
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger

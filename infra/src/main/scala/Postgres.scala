@@ -1,25 +1,25 @@
 import besom.*
 import besom.api.kubernetes as k8s
 import k8s.apps.v1.inputs.*
-import k8s.apps.v1.{DeploymentArgs, deployment}
-import k8s.apps.v1.outputs.Deployment
+import k8s.apps.v1.{Deployment, DeploymentArgs}
 import k8s.core.v1.inputs.*
 import k8s.core.v1.{ConfigMapArgs, ServiceArgs, *}
 import k8s.meta.v1.inputs.*
 import besom.internal.{Context, Output}
 import besom.util.NonEmptyString
+import besom.aliases.NonEmptyString
 
 object Postgres {
-  val appName = "postgres"
-  val labels  = Map("app" -> "postgres")
-  val port = 5432
+  val appName: NonEmptyString = "postgres" // todo fix inference in NonEmptyString
+  val labels                  = Map("app" -> "postgres")
+  val port                    = 5432
 
-  def deploy(using Context)(namespace: Namespace) = {
+  def deploy(using Context)(namespace: Output[Namespace]) = {
 
-    val postgresPV = persistentVolume(
-      NonEmptyString(appName).get,
+    val postgresPV = PersistentVolume(
+      appName,
       k8s.core.v1.PersistentVolumeArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-pv", namespace = namespace.metadata.name.orEmpty),
+        metadata = ObjectMetaArgs(name = s"$appName-pv", namespace = namespace.metadata.name),
         spec = PersistentVolumeSpecArgs(
           capacity = Map("storage" -> "8Gi"),
           accessModes = List("ReadWriteMany"),
@@ -28,23 +28,23 @@ object Postgres {
       )
     )
 
-    val postgresPVC = persistentVolumeClaim(
-      NonEmptyString(appName).get,
+    val postgresPVC = PersistentVolumeClaim(
+      appName,
       k8s.core.v1.PersistentVolumeClaimArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-pvc", namespace = namespace.metadata.name.orEmpty),
+        metadata = ObjectMetaArgs(name = s"$appName-pvc", namespace = namespace.metadata.name),
         spec = PersistentVolumeClaimSpecArgs(
           accessModes = List("ReadWriteMany"),
-          resources = ResourceRequirementsArgs(
+          resources = VolumeResourceRequirementsArgs(
             requests = Map("storage" -> "8Gi")
           )
         )
       )
     )
 
-    val postgresConfigMap = configMap(
-      NonEmptyString(s"$appName-config").get,
+    val postgresConfigMap = ConfigMap(
+      s"$appName-config",
       ConfigMapArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-config-map", namespace = namespace.metadata.name.orEmpty),
+        metadata = ObjectMetaArgs(name = s"$appName-config-map", namespace = namespace.metadata.name),
         data = Map(
           "DEBUG" -> "true",
           "POSTGRES_DB" -> "vss",
@@ -54,17 +54,17 @@ object Postgres {
       )
     )
 
-    val initConfigMap = configMap(
-      NonEmptyString(s"$appName-init").get,
+    val initConfigMap = ConfigMap(
+      s"$appName-init",
       ConfigMapArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-init-config-map", namespace = namespace.metadata.name.orEmpty),
+        metadata = ObjectMetaArgs(name = s"$appName-init-config-map", namespace = namespace.metadata.name),
         // path starts from  besom/.scala-build
         data = Ops.readFileIntoConfigMap("../commons/src/main/resources/tables.sql", Some("init.sql"))
       )
     )
 
-    deployment(
-      NonEmptyString(appName).get,
+    Deployment(
+      appName,
       DeploymentArgs(
         spec = DeploymentSpecArgs(
           selector = LabelSelectorArgs(matchLabels = labels),
@@ -73,7 +73,7 @@ object Postgres {
             metadata = ObjectMetaArgs(
               name = s"$appName-deployment",
               labels = labels,
-              namespace = namespace.metadata.name.orEmpty
+              namespace = namespace.metadata.name
             ),
             spec = PodSpecArgs(
               containers = List(
@@ -84,7 +84,7 @@ object Postgres {
                     ContainerPortArgs(containerPort = port)
                   ),
                   envFrom = List(
-                    EnvFromSourceArgs(configMapRef = ConfigMapEnvSourceArgs(postgresConfigMap.metadata.name.orEmpty))
+                    EnvFromSourceArgs(configMapRef = ConfigMapEnvSourceArgs(postgresConfigMap.metadata.name))
                   ),
                   volumeMounts = List(
                     VolumeMountArgs(mountPath = "/var/lib/postgres/data", name = "postgres-data"),
@@ -101,13 +101,14 @@ object Postgres {
               volumes = List(
                 VolumeArgs(
                   name = s"$appName-data",
-                  persistentVolumeClaim =
-                    PersistentVolumeClaimVolumeSourceArgs(claimName = postgresPVC.metadata.name.orEmpty)
+                  persistentVolumeClaim = PersistentVolumeClaimVolumeSourceArgs(claimName =
+                    postgresPVC.metadata.name.map(_.get) // TODO fix this
+                  )
                 ),
                 VolumeArgs(
                   name = s"$appName-init",
                   configMap = ConfigMapVolumeSourceArgs(
-                    name = initConfigMap.metadata.name.orEmpty,
+                    name = initConfigMap.metadata.name,
                     defaultMode = 444
                   )
                 )
@@ -117,14 +118,14 @@ object Postgres {
         ),
         metadata = ObjectMetaArgs(
           name = s"$appName-deployment",
-          namespace = namespace.metadata.name.orEmpty
+          namespace = namespace.metadata.name
         )
       )
     )
   }
 
-  def deployService(using Context)(namespace: Namespace) = service(
-    NonEmptyString(appName).get,
+  def deployService(using Context)(namespace: Output[Namespace]) = Service(
+    appName,
     ServiceArgs(
       spec = ServiceSpecArgs(
         selector = labels,
@@ -134,7 +135,7 @@ object Postgres {
       ),
       metadata = ObjectMetaArgs(
         name = s"$appName-service",
-        namespace = namespace.metadata.name.orEmpty
+        namespace = namespace.metadata.name
       )
     )
   )

@@ -7,7 +7,7 @@ import com.virtuslab.vss.zio.stats.config.KafkaConfig
 import com.virtuslab.vss.zio.stats.services.EventService
 import zio.kafka.consumer.{CommittableRecord, Consumer, ConsumerSettings, Subscription}
 import com.virtuslab.vss.common.Event
-import upickle.default.*
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 
 trait KafkaConsumer:
   def consume: Stream[Throwable, Nothing]
@@ -20,7 +20,7 @@ case class KafkaConsumerImpl(consumer: Consumer, eventService: EventService) ext
       .plainStream(Subscription.topics(topicName), Serde.string, Serde.string)
       .mapZIO { case committableRecord =>
         for
-          event <- ZIO.attempt(read[Event](committableRecord.record.value()))
+          event <- ZIO.attempt(readFromString[Event](committableRecord.record.value()))
           _     <- eventService.saveEvent(event)
         yield committableRecord
       }
@@ -35,6 +35,7 @@ object KafkaConsumer:
   private val consumer: TaskLayer[Consumer] = ZLayer.scoped {
     for
       config <- ZIO.config(KafkaConfig.config)
+      _      <- ZIO.logInfo(s"Creating Kafka consumer for ${config.host}:${config.port}")
       servers = List(s"${config.host}:${config.port}")
       consumer <- Consumer.make(ConsumerSettings(servers).withGroupId(groupId))
     yield consumer

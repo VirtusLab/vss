@@ -2,8 +2,7 @@ package com.virtuslab.vss.common
 
 import sttp.tapir.*
 import sttp.tapir.generic.auto.*
-import sttp.tapir.json.upickle.*
-import upickle.default.*
+import sttp.tapir.json.jsoniter.*
 
 object StatsEndpoints:
 

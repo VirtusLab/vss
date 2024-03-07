@@ -5,34 +5,32 @@ import com.virtuslab.vss.common.*
 import com.virtuslab.vss.zio.base.resources.Db.Schema.*
 import io.getquill.*
 import io.getquill.jdbczio.Quill.Postgres
+import org.checkerframework.checker.units.qual.h
+
+case class HashedPasswordRow(hashType: String, passwordHash: String)
 
 trait PasswordRepository:
   def saveHash(hashedPassword: HashedPassword): RIO[Scope, Unit]
-  def getHash(hashType: String, password: String): RIO[Scope, Option[HashedPassword]]
-  def checkPwned(passwordHash: String): RIO[Scope, Boolean]
+  def checkPwned(passwordHash: String): RIO[Scope, Long]
 
 case class PasswordRepositoryImpl(db: Postgres[SnakeCase]) extends PasswordRepository:
-  import db._
+  import db.*
+
+  inline def schema = quote(querySchema[HashedPasswordRow]("hashed_passwords"))
+
   override def saveHash(hashedPassword: HashedPassword): RIO[Scope, Unit] = run(
-    sql"""insert into hashed_passwords (password, hash_type, password_hash) 
-    values (${lift(hashedPassword.password)}, ${lift(hashedPassword.hashType)}, ${lift(hashedPassword.hash)}) 
-    on conflict do nothing"""
-      .as[Update[Unit]]
-  ).either.unit
+    // sql"""INSERT INTO hashed_passwords (hash_type, password_hash)
+    //       VALUES (${lift(hashedPassword.hashType)}, ${lift(hashedPassword.hash)})
+    //       ON CONFLICT DO NOTHING""".as[Update[Unit]]
+    schema.insertValue(lift(HashedPasswordRow(hashedPassword.hashType, hashedPassword.hash)))
+  ).unit
 
-  override def getHash(hashType: String, password: String): RIO[Scope, Option[HashedPassword]] = for result <- run(
-      sql"""select * from hashed_passwords 
-      where hash_type = ${lift(hashType)} and password = ${lift(password)}"""
-        .as[Query[HashedPasswords]]
-    )
-  yield result.headOption.map(hp => HashedPassword(hp.hash_type, hp.password, hp.password_hash))
-
-  override def checkPwned(passwordHash: String): RIO[Scope, Boolean] = for result <- run(
-      sql"""select * from hashed_passwords 
-      where password_hash = ${lift(passwordHash)}"""
-        .as[Query[HashedPasswords]]
-    )
-  yield result.nonEmpty
+  override def checkPwned(passwordHash: String): RIO[Scope, Long] = run(
+    // sql"""SELECT COUNT(*) FROM hashed_passwords
+    //       WHERE password_hash = ${lift(passwordHash)}"""
+    //   .as[Query[Int]]
+    schema.filter(_.passwordHash == lift(passwordHash)).size
+  )
 
 object PasswordRepository:
   val layer = ZLayer.fromFunction(PasswordRepositoryImpl.apply)

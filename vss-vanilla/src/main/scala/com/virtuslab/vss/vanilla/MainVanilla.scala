@@ -7,7 +7,6 @@ import io.grpc.ServerBuilder
 import sttp.tapir.server.netty.NettyFutureServer
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io.StdIn
@@ -15,6 +14,8 @@ import scala.util.Failure
 import scala.util.Success
 
 @main def mainVanilla(): Unit =
+  given ExecutionContext = Execution.FutureContext
+
   val httpPort   = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
   val httpServer = new VanillaHttpServer().runHttpServer(httpPort)
   println(s"Go to http://localhost:$httpPort/docs to open SwaggerUI")

@@ -23,11 +23,11 @@ case class HttpServiceImpl(eventService: EventService) extends HttpService:
     _ <- Server.serve(routes.withDefaultErrorResponse).provide(serverLayer)
   yield ()
 
-  private val getAllEvents: ZServerEndpoint[Any, Any] =
-    StatsEndpoints.getLatestEvents.zServerLogic[Any](_ => eventService.listEvents().mapError(_ => ()))
+  private val getAllEvents =
+    StatsEndpoints.getLatestEvents.zServerLogic[Any](_ => eventService.listEvents().orDie)
 
-  private val docs: List[ZServerEndpoint[Any, Any]] = SwaggerInterpreter()
-    .fromServerEndpoints[Task](List(getAllEvents), "vss-zio", "1.0.0")
+  private val docs: List[ZServerEndpoint[Any, Any]] =
+    SwaggerInterpreter().fromServerEndpoints[Task](List(getAllEvents), "vss-zio", "1.0.0")
 
   private val routes = ZioHttpInterpreter().toHttp(List(getAllEvents) ++ docs)
 

@@ -41,31 +41,36 @@ object Passwords {
     events: Events[F]
   ): Passwords[F] = new Passwords[F] {
 
-    private def doCheckPwned(passwordHash: String): F[Boolean] = Trace[F].span("doCheckPwned") {
-      sql"select hash_type from hashed_passwords where password_hash = $passwordHash"
-        .query[String]
-        .to[List]
+    private def doCheckPwned(passwordHash: String): F[Long] = Trace[F].span("doCheckPwned") {
+      sql"SELECT COUNT(*) FROM hashed_passwords WHERE password_hash = $passwordHash"
+        .query[Long]
+        .unique
         .transact(transactor)
-        .map(_.nonEmpty)
     }
 
     override def checkPwned(checkPwned: CheckPwned): F[CheckedPwned] = Trace[F].span("checkPwned") {
       for {
-        pwnd <- doCheckPwned(checkPwned.passwordHash).map(CheckedPwned.apply(checkPwned.passwordHash, _))
-        _    <- Trace[F].put("passwordHash" -> checkPwned.passwordHash, "pwnd" -> pwnd.toString)
-        _    <- events.publishEvent(Event.CheckedPwned(checkPwned.passwordHash))
+        pwnd <- doCheckPwned(checkPwned.passwordHash).map { occurrences =>
+          CheckedPwned.apply(
+            checkPwned.passwordHash,
+            occurrences > 0,
+            if occurrences > 0 then Some(occurrences) else None
+          )
+        }
+        _ <- Trace[F].put("passwordHash" -> checkPwned.passwordHash, "pwnd" -> pwnd.toString)
+        _ <- events.publishEvent(Event.CheckedPwned(checkPwned.passwordHash))
       } yield pwnd
     }
 
-    private def hashAlgorithm(hashType: String): F[(String => String)] = hashType match
+    private def hashAlgorithm(hashType: String): F[String => String] = hashType match
       case "sha256" => Monad[F].pure(DigestUtils.sha256Hex)
       case _ =>
-        MonadThrow[F].raiseError(new RuntimeException("Unsupported hash type"))
+        MonadThrow[F].raiseError(RuntimeException("Unsupported hash type"))
           <* Logger[F].info(s"Unsupported hash type: $hashType")
 
     private def saveHash(hashedPassword: HashedPassword): F[Unit] = Trace[F].span("saveHash") {
-      sql"""|insert into hashed_passwords (hash_type, password_hash)
-            | values (${hashedPassword.hashType}, ${hashedPassword.hash}) on conflict do nothing""".stripMargin.update.run
+      sql"""|INSERT INTO hashed_passwords (hash_type, password_hash)
+            |VALUES (${hashedPassword.hashType}, ${hashedPassword.hash})""".stripMargin.update.run
         .transact(transactor)
         .void
     }
