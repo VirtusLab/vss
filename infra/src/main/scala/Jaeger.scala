@@ -41,12 +41,19 @@ object Jaeger {
             containers = List(
               ContainerArgs(
                 name = appName,
-                image = "jaegertracing/all-in-one:latest",
+                image = "jaegertracing/all-in-one:1.36",
                 ports = ports.map { case (name, (protocol, port)) =>
                   ContainerPortArgs(containerPort = port, protocol)
                 }.toList,
                 env = List(
-                  EnvVarArgs(name = "COLLECTOR_ZIPKIN_HTTP_PORT", value = ports("zipkin-collector")._2.toString())
+                  EnvVarArgs(
+                    name = "COLLECTOR_ZIPKIN_HOST_PORT",
+                    value = s":${ports("zipkin-collector")._2.toString()}"
+                  ),
+                  EnvVarArgs(
+                    name = "COLLECTOR_OTLP_ENABLED",
+                    value = "true"
+                  )
                 )
               )
             )

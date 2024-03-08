@@ -73,6 +73,9 @@ lazy val vss_zio = project
       "io.scalaland"                %% "chimney"               % "0.8.0-M1",
       "io.jaegertracing"             % "jaeger-core"           % jaegerVersion,
       "io.jaegertracing"             % "jaeger-client"         % jaegerVersion,
+      "io.jaegertracing"             % "jaeger-zipkin"         % jaegerVersion,
+      "io.zipkin.reporter2"          % "zipkin-reporter"       % "2.16.3",
+      "io.zipkin.reporter2"          % "zipkin-sender-okhttp3" % "2.16.3",
       ("io.getquill"                %% "quill-zio"             % quillVersion).exclude("com.lihaoyi", "geny_2.13"),
       ("io.getquill"                %% "quill-jdbc-zio"        % quillVersion).exclude("com.lihaoyi", "geny_2.13")
     )

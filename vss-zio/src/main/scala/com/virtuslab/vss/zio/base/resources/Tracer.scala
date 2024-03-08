@@ -4,13 +4,16 @@ import io.jaegertracing.Configuration
 import io.jaegertracing.internal.JaegerTracer
 import io.jaegertracing.internal.samplers.ConstSampler
 import io.jaegertracing.internal.reporters.RemoteReporter
-import io.jaegertracing.thrift.internal.senders.UdpSender
+import io.jaegertracing.zipkin.ZipkinV2Reporter
+import org.apache.http.client.utils.URIBuilder
+import zipkin2.reporter.AsyncReporter
+import zipkin2.reporter.okhttp3.OkHttpSender
 import com.virtuslab.vss.zio.base.config.JaegerConfig
 import zio.telemetry.opentracing.OpenTracing
 import java.net.URI
 import zio.*
 
-object Tracer {
+object Tracer:
 
   def layer: TaskLayer[OpenTracing] = ZLayer.scoped {
     for
@@ -22,19 +25,21 @@ object Tracer {
   }
 
   private def makeTracer(uri: String, serviceName: String): Task[JaegerTracer] =
-    for {
-      parsedURI <- ZIO.attempt(new URI(uri))
-      (host, port) = (parsedURI.getHost(), parsedURI.getPort())
-      tracer <- ZIO.attempt(
-        Configuration(serviceName).getTracerBuilder
-          .withSampler(ConstSampler(true))
-          .withReporter(
-            RemoteReporter.Builder().withSender(UdpSender(host, port, 0)).build()
-          )
-          .build()
+    for
+      host <- ZIO.attempt(uri.split(':').head)
+      _    <- ZIO.logInfo(s"Parsed host for Jaeger tracer: ${host}")
+      url <- ZIO.attempt(
+        new URIBuilder().setScheme("http").setHost(host).setPort(9411).setPath("/api/v2/spans").build.toString
       )
-    } yield tracer
-}
+      _             <- ZIO.logInfo(s"Created URL for Jaeger tracer: ${url}")
+      senderBuilder <- ZIO.attempt(OkHttpSender.newBuilder.compressionEnabled(true).endpoint(url))
+      tracer <- ZIO.attempt(
+        new Configuration(serviceName).getTracerBuilder
+          .withSampler(new ConstSampler(true))
+          .withReporter(new ZipkinV2Reporter(AsyncReporter.create(senderBuilder.build)))
+          .build
+      )
+    yield tracer
 
 object TracingOps:
   extension [R, E, A](zio: ZIO[R, E, A])
