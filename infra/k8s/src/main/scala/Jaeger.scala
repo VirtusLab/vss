@@ -25,7 +25,7 @@ object Jaeger {
     "zipkin-collector" -> (None, 9411)
   )
 
-  def deploy(using Context)(namespace: Output[Namespace]) = Deployment(
+  def deploy(using Context)(namespace: Output[Namespace], k8sProvider: Output[k8s.Provider]) = Deployment(
     appName,
     DeploymentArgs(
       spec = DeploymentSpecArgs(
@@ -64,10 +64,13 @@ object Jaeger {
         name = s"$appName-deployment",
         namespace = namespace.metadata.name
       )
-    )
+    ),
+    opts(provider = k8sProvider)
   )
 
-  def deployService(using Context)(namespace: Output[Namespace]) = Service(
+  def deployService(using
+    Context
+  )(namespace: Output[Namespace], jaegerDeployment: Output[Deployment], k8sProvider: Output[k8s.Provider]) = Service(
     appName,
     ServiceArgs(
       spec = ServiceSpecArgs(
@@ -80,7 +83,8 @@ object Jaeger {
         name = s"$appName-service",
         namespace = namespace.metadata.name
       )
-    )
+    ),
+    opts(dependsOn = jaegerDeployment, provider = k8sProvider)
   )
 
 }

@@ -2,7 +2,7 @@ import besom.*
 import besom.util.NonEmptyString
 import besom.api.kubernetes as k8s
 import k8s.core.v1.inputs.*
-import k8s.core.v1.{ConfigMap, Namespace, Service, ConfigMapArgs, ServiceArgs}
+import k8s.core.v1.{ConfigMap, ConfigMapArgs, Namespace, Service, ServiceArgs}
 import k8s.apps.v1.inputs.*
 import k8s.apps.v1.{Deployment, DeploymentArgs}
 import k8s.meta.v1.inputs.*
@@ -13,7 +13,7 @@ object Zookeeper {
   val appName: NonEmptyString = "zookeeper" // todo fix inference in NonEmptyString
   val labels                  = Map("app" -> "zookeeper")
 
-  def deploy(using Context)(namespace: Output[Namespace]) = Deployment(
+  def deploy(using Context)(namespace: Output[Namespace], k8sProvider: Output[k8s.Provider]) = Deployment(
     appName,
     DeploymentArgs(
       spec = DeploymentSpecArgs(
@@ -46,10 +46,13 @@ object Zookeeper {
         name = s"$appName-deployment",
         namespace = namespace.metadata.name
       )
-    )
+    ),
+    opts(provider = k8sProvider)
   )
 
-  def deployService(using Context)(namespace: Output[Namespace]) = Service(
+  def deployService(using
+    Context
+  )(namespace: Output[Namespace], zooDeployment: Output[Deployment], k8sProvider: Output[k8s.Provider]) = Service(
     appName,
     ServiceArgs(
       spec = ServiceSpecArgs(
@@ -62,7 +65,8 @@ object Zookeeper {
         name = s"$appName-service",
         namespace = namespace.metadata.name
       )
-    )
+    ),
+    opts(dependsOn = zooDeployment, provider = k8sProvider)
   )
 
 }

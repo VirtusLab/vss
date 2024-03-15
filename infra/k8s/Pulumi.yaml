@@ -1,0 +1,11 @@
+name: vss
+description: VSS infra
+runtime: scala
+config:
+  vss:localRegistry: "localhost:5001"
+  vss:imageName: "vss-cats"
+  vss:imageTag: "0.1.0-SNAPSHOT"
+  vss:cluster: "local"
+  vss:cluster-org: "organization"
+  vss:cluster-project: "vss-aws-eks"
+  vss:cluster-stack: "dev"

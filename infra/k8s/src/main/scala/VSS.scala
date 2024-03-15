@@ -3,6 +3,7 @@ import besom.util.*
 import besom.api.kubernetes as k8s
 import k8s.core.v1.inputs.*
 import k8s.core.v1.{ConfigMap, ConfigMapArgs, Namespace, Service, ServiceArgs}
+import k8s.core.v1.enums.ServiceSpecType
 import k8s.apps.v1.inputs.*
 import k8s.apps.v1.{Deployment, DeploymentArgs}
 import k8s.meta.v1.inputs.*
@@ -24,7 +25,8 @@ object VSS {
     namespace: Output[Namespace],
     postgresService: Output[Service],
     kafkaService: Output[Service],
-    jaegerService: Output[Service]
+    jaegerService: Output[Service],
+    k8sProvider: Output[k8s.Provider]
   ) = {
     val localRegistry = config.requireString("localRegistry")
     val imageName     = config.requireString("imageName")
@@ -74,14 +76,21 @@ object VSS {
           name = s"$appName-deployment",
           namespace = namespace.metadata.name
         )
-      )
+      ),
+      opts(provider = k8sProvider)
     )
   }
 
-  def deployService(using Context)(namespace: Output[Namespace]) = Service(
+  def deployService(using Context)(
+    serviceType: Output[ServiceSpecType],
+    namespace: Output[Namespace],
+    vssDeployment: Output[Deployment],
+    k8sProvider: Output[k8s.Provider]
+  ) = Service(
     appName,
     ServiceArgs(
       spec = ServiceSpecArgs(
+        `type` = serviceType,
         selector = labels,
         ports = ports.map { case (name, (protocol, port)) =>
           ServicePortArgs(name = name, port = port, targetPort = port, protocol = protocol)
@@ -91,7 +100,8 @@ object VSS {
         name = s"$appName-service",
         namespace = namespace.metadata.name
       )
-    )
+    ),
+    opts(dependsOn = vssDeployment, provider = k8sProvider)
   )
 
 }
