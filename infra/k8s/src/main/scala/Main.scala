@@ -39,6 +39,17 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
 
   val appNamespace = Namespace(name = "vss", opts = opts(provider = k8sProvider))
 
+  // loki
+  val lokiDeployment = Loki.deploy(appNamespace, k8sProvider)
+  val lokiService    = Loki.deployService(appNamespace, lokiDeployment, k8sProvider)
+
+  // promtail
+  val promtailDaemonSet = Promtail.deploy(lokiService, appNamespace, k8sProvider)
+
+  // grafana
+  val grafanaDeployment = Grafana.deploy(appNamespace, k8sProvider)
+  val grafanaService    = Grafana.deployService(appNamespace, grafanaDeployment, k8sProvider)
+
   // zookeeper
   val zooDeployment = Zookeeper.deploy(appNamespace, k8sProvider)
   val zooService    = Zookeeper.deployService(appNamespace, zooDeployment, k8sProvider)
@@ -70,6 +81,11 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
   Stack.exports(
     serviceUrl = vssServiceUrl,
     namespaceName = appNamespace.metadata.name,
+    lokiDeploymentName = lokiDeployment.metadata.name,
+    lokiServiceName = lokiService.metadata.name,
+    grafanaDeploymentName = grafanaDeployment.metadata.name,
+    grafanaServiceName = grafanaService.metadata.name,
+    promtailDaemonSetName = promtailDaemonSet.metadata.name,
     zookeeperDeploymentName = zooDeployment.metadata.name,
     zookeeperServiceName = zooService.metadata.name,
     kafkaDeploymentName = kafkaDeployment.metadata.name,
