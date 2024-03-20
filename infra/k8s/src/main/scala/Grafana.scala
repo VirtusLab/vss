@@ -1,4 +1,3 @@
-import besom.api.kubernetes.core.v1.Namespace
 import besom.*
 import besom.aliases.NonEmptyString
 import besom.api.kubernetes as k8s
@@ -6,6 +5,7 @@ import k8s.apps.v1.inputs.*
 import k8s.apps.v1.{Deployment, DeploymentArgs}
 import k8s.core.v1.inputs.*
 import k8s.core.v1.{ConfigMapArgs, ServiceArgs, *}
+import k8s.core.v1.enums.ServiceSpecType
 import k8s.meta.v1.inputs.*
 import besom.internal.{Context, Output}
 import besom.util.NonEmptyString
@@ -59,7 +59,7 @@ object Grafana:
               namespace = namespace.metadata.name
             ),
             spec = PodSpecArgs(
-              securityContext = PodSecurityContextArgs(runAsUser = 0, fsGroup = 0, runAsGroup = 0),
+              securityContext = PodSecurityContextArgs(runAsUser = 0, fsGroup = 0),
               containers = List(
                 ContainerArgs(
                   name = appName,
@@ -117,13 +117,18 @@ object Grafana:
 
   def deployService(using
     Context
-  )(namespace: Output[Namespace], grafanaDeployment: Output[Deployment], k8sProvider: Output[k8s.Provider]) = Service(
+  )(
+    serviceType: Output[ServiceSpecType],
+    namespace: Output[Namespace],
+    grafanaDeployment: Output[Deployment],
+    k8sProvider: Output[k8s.Provider]
+  ) = Service(
     appName,
     ServiceArgs(
       spec = ServiceSpecArgs(
         selector = labels,
         sessionAffinity = "None",
-        `type` = k8s.core.v1.enums.ServiceSpecType.ClusterIP,
+        `type` = serviceType,
         ports = List(
           ServicePortArgs(port = port, targetPort = port)
         )

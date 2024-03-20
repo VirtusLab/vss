@@ -1,18 +1,16 @@
-import besom.api.kubernetes.core.v1.Namespace
 import besom.*
 import besom.aliases.NonEmptyString
 import besom.api.kubernetes as k8s
 import k8s.apps.v1.inputs.*
 import k8s.apps.v1.{DaemonSet, DaemonSetArgs, Deployment, DeploymentArgs}
 import k8s.core.v1.inputs.*
-import k8s.core.v1.{ConfigMapArgs, ServiceAccountArgs, ServiceArgs, *}
+import k8s.core.v1.{ConfigMapArgs, ServiceAccountArgs, *}
 import k8s.meta.v1.inputs.*
+import k8s.rbac.v1.inputs.{PolicyRuleArgs, RoleRefArgs, SubjectArgs}
+import k8s.rbac.v1.{ClusterRole, ClusterRoleArgs, ClusterRoleBinding, ClusterRoleBindingArgs}
 import besom.internal.{Context, Output}
 import besom.util.NonEmptyString
 import besom.aliases.NonEmptyString
-import besom.api.kubernetes.rbac.v1.inputs.{PolicyRuleArgs, RoleRefArgs, SubjectArgs}
-import besom.api.kubernetes.rbac.v1.{ClusterRole, ClusterRoleArgs, ClusterRoleBinding, ClusterRoleBindingArgs}
-import besom.api.kubernetes.scheduling.v1.{PriorityClass, PriorityClassArgs}
 
 object Promtail:
   val appName: NonEmptyString = "promtail"
@@ -82,16 +80,16 @@ object Promtail:
     )
 
     val serviceAccount = ServiceAccount(
-      s"$appName-serviceaccount",
+      s"$appName-service-account",
       ServiceAccountArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-serviceaccount", namespace = namespace.metadata.name)
+        metadata = ObjectMetaArgs(name = s"$appName-service-account", namespace = namespace.metadata.name)
       )
     )
 
     val clusterRole = ClusterRole(
-      s"$appName-clusterrole",
+      s"$appName-cluster-role",
       ClusterRoleArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-clusterrole", namespace = namespace.metadata.name),
+        metadata = ObjectMetaArgs(name = s"$appName-cluster-role", namespace = namespace.metadata.name),
         rules = List(
           PolicyRuleArgs(
             apiGroups = List(""),
@@ -103,9 +101,9 @@ object Promtail:
     )
 
     val clusterRoleBinding = ClusterRoleBinding(
-      s"$appName-clusterrolebinding",
+      s"$appName-cluster-role-binding",
       ClusterRoleBindingArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-clusterrolebinding", namespace = namespace.metadata.name),
+        metadata = ObjectMetaArgs(name = s"$appName-cluster-role-binding", namespace = namespace.metadata.name),
         subjects = List(
           SubjectArgs(
             kind = "ServiceAccount",
@@ -119,23 +117,13 @@ object Promtail:
           apiGroup = "rbac.authorization.k8s.io"
         )
       ),
-      opts = opts(dependsOn = clusterRole, serviceAccount)
-    )
-
-    val priorityClass = PriorityClass(
-      s"$appName-priorityclass",
-      PriorityClassArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-priorityclass", namespace = namespace.metadata.name),
-        value = 1000000,
-        globalDefault = false,
-        description = "This priority class should be used for log service pods only."
-      )
+      opts = opts(retainOnDelete = false, dependsOn = List(clusterRole, serviceAccount))
     )
 
     DaemonSet(
-      s"$appName-daemonset",
+      s"$appName-daemon-set",
       DaemonSetArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-daemonset", namespace = namespace.metadata.name),
+        metadata = ObjectMetaArgs(name = s"$appName-daemon-set", namespace = namespace.metadata.name),
         spec = DaemonSetSpecArgs(
           selector = LabelSelectorArgs(matchLabels = labels),
           template = PodTemplateSpecArgs(
@@ -145,7 +133,6 @@ object Promtail:
               namespace = namespace.metadata.name
             ),
             spec = PodSpecArgs(
-              priorityClassName = priorityClass.metadata.name,
               serviceAccount = serviceAccount.metadata.name,
               containers = List(
                 ContainerArgs(

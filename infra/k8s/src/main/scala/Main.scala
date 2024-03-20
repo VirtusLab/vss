@@ -48,7 +48,7 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
 
   // grafana
   val grafanaDeployment = Grafana.deploy(appNamespace, k8sProvider)
-  val grafanaService    = Grafana.deployService(appNamespace, grafanaDeployment, k8sProvider)
+  val grafanaService    = Grafana.deployService(serviceType, appNamespace, grafanaDeployment, k8sProvider)
 
   // zookeeper
   val zooDeployment = Zookeeper.deploy(appNamespace, k8sProvider)
@@ -70,6 +70,14 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
   val vssDeployment = VSS.deploy(config, appNamespace, postgresService, kafkaService, jaegerService, k8sProvider)
   val vssService    = VSS.deployService(serviceType, appNamespace, vssDeployment, k8sProvider)
 
+  val grafanaServiceUrl =
+    grafanaService.status.loadBalancer.ingress
+      .map(
+        _.flatMap(_.headOption.flatMap(_.hostname))
+          .map(host => p"http://$host:${Grafana.port}")
+          .getOrElse("Host not find. Probably vss:cluster is set to local")
+      )
+
   val vssServiceUrl =
     vssService.status.loadBalancer.ingress
       .map(
@@ -79,7 +87,8 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
       )
 
   Stack.exports(
-    serviceUrl = vssServiceUrl,
+    grafanaServiceUrl = grafanaServiceUrl,
+    vssServiceUrl = vssServiceUrl,
     namespaceName = appNamespace.metadata.name,
     lokiDeploymentName = lokiDeployment.metadata.name,
     lokiServiceName = lokiService.metadata.name,

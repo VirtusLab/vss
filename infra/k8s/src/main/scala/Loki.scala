@@ -1,4 +1,3 @@
-import besom.api.kubernetes.core.v1.Namespace
 import besom.*
 import besom.aliases.NonEmptyString
 import besom.api.kubernetes as k8s
