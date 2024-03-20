@@ -82,8 +82,9 @@ object Promtail:
     val serviceAccount = ServiceAccount(
       s"$appName-service-account",
       ServiceAccountArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-service-account", namespace = namespace.metadata.name)
-      )
+        metadata = ObjectMetaArgs(name = s"$appName-service-account" /*, namespace = namespace.metadata.name*/ )
+      ),
+      opts(provider = k8sProvider)
     )
 
     val clusterRole = ClusterRole(
@@ -97,7 +98,8 @@ object Promtail:
             verbs = List("get", "watch", "list")
           )
         )
-      )
+      ),
+      opts(provider = k8sProvider)
     )
 
     val clusterRoleBinding = ClusterRoleBinding(
@@ -117,7 +119,7 @@ object Promtail:
           apiGroup = "rbac.authorization.k8s.io"
         )
       ),
-      opts = opts(retainOnDelete = false, dependsOn = List(clusterRole, serviceAccount))
+      opts = opts(provider = k8sProvider, retainOnDelete = false, dependsOn = List(clusterRole, serviceAccount))
     )
 
     DaemonSet(
@@ -187,5 +189,5 @@ object Promtail:
           )
         )
       ),
-      opts = opts(dependsOn = clusterRoleBinding)
+      opts = opts(provider = k8sProvider, dependsOn = clusterRoleBinding)
     )

@@ -1,6 +1,9 @@
 import besom.*
 import besom.api.kubernetes as k8s
-import k8s.core.v1.{Namespace, Service}
+import besom.api.kubernetes.meta.v1.inputs.ObjectMetaArgs
+import besom.api.kubernetes.rbac.v1.inputs.PolicyRuleArgs
+import besom.api.kubernetes.rbac.v1.{ClusterRole, ClusterRoleArgs}
+import k8s.core.v1.{Namespace, NamespaceArgs, Service, ServiceAccount, ServiceAccountArgs}
 import k8s.core.v1.enums.ServiceSpecType
 import besom.internal.{Config, Output}
 import besom.json.DefaultJsonProtocol.StringJsonFormat
@@ -37,7 +40,11 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
           s"$str value not allowed. Available values are local or remote. Change vss:cluster configuration"
         )
 
-  val appNamespace = Namespace(name = "vss", opts = opts(provider = k8sProvider))
+  val appNamespace = Namespace(
+    name = "default",
+    NamespaceArgs(metadata = ObjectMetaArgs(name = "default")),
+    opts = opts(provider = k8sProvider, retainOnDelete = true)
+  )
 
   // loki
   val lokiDeployment = Loki.deploy(appNamespace, k8sProvider)
