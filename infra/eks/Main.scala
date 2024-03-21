@@ -1,5 +1,5 @@
 import besom.*
-import besom.api.{awsx, eks}
+import besom.api.{aws, awsx, eks}
 
 @main def main = Pulumi.run {
   val appName = "vss"
@@ -24,5 +24,22 @@ import besom.api.{awsx, eks}
     )
   )
 
-  Stack(cluster).exports(kubeconfig = cluster.kubeconfigJson)
+  val repo = aws.ecr.Repository(
+    s"$appName-repository",
+    aws.ecr.RepositoryArgs(
+      imageTagMutability = "MUTABLE"
+    )
+  )
+
+  val authorizationToken =
+    aws.ecr.getAuthorizationToken(aws.ecr.GetAuthorizationTokenArgs(registryId = repo.registryId))
+
+  Stack(cluster).exports(
+    registryEndpoint = authorizationToken.proxyEndpoint,
+    repositoryUrl = repo.repositoryUrl,
+    accessKeyId = authorizationToken.map(_.userName).asSecret,
+    secretAccessKey = authorizationToken.map(_.password).asSecret,
+    kubeconfig = cluster.kubeconfigJson,
+    organization = pulumiOrganization
+  )
 }

@@ -1,5 +1,6 @@
+import VSS.appName
 import besom.*
-import besom.api.kubernetes as k8s
+import besom.api.{docker, kubernetes as k8s}
 import besom.api.kubernetes.meta.v1.inputs.ObjectMetaArgs
 import besom.api.kubernetes.rbac.v1.inputs.PolicyRuleArgs
 import besom.api.kubernetes.rbac.v1.{ClusterRole, ClusterRoleArgs}
@@ -46,6 +47,81 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
     opts = opts(provider = k8sProvider)
   )
 
+  val imageTag        = config.requireString("imageTag")
+  val localRepository = config.requireString("localRepository")
+
+  val out = config
+    .requireString("cluster")
+    .flatMap:
+      case "local" =>
+        Output(None, p"$localRepository:$imageTag")
+      case "remote" =>
+        for
+          k8sOrgName       <- config.getString("cluster-org").getOrElse("organization")
+          k8sProjName      <- config.requireString("cluster-project")
+          k8sStackName     <- config.requireString("cluster-stack")
+          stack            <- StackReference(name = s"$k8sOrgName/$k8sProjName/$k8sStackName")
+          registryEndpoint <- stack.requireOutput("registryEndpoint").map(_.convertTo[String])
+          repositoryUrl    <- stack.requireOutput("repositoryUrl").map(_.convertTo[String])
+          secretAccessKey  <- stack.requireOutput("secretAccessKey").map(_.convertTo[String])
+          accessKeyId      <- stack.requireOutput("accessKeyId").map(_.convertTo[String])
+          dockerProvider <- docker.Provider(
+            s"$appName-docker-provider",
+            docker.ProviderArgs(
+              registryAuth = List(
+                docker.inputs.ProviderRegistryAuthArgs(
+                  address = registryEndpoint,
+                  username = accessKeyId,
+                  password = secretAccessKey
+                )
+              )
+            )
+          )
+          tag <- docker.Tag(
+            s"$appName-tag",
+            docker.TagArgs(
+              sourceImage = p"$localRepository:$imageTag",
+              targetImage = p"$repositoryUrl:$imageTag"
+            ),
+            opts = opts(provider = dockerProvider)
+          )
+          image <- docker.RegistryImage(
+            s"$appName-image",
+            docker.RegistryImageArgs(name = tag.targetImage),
+            opts = opts(provider = dockerProvider)
+          )
+          k8sRegistry <- k8s.core.v1.Secret(
+            s"$appName-registry-secret",
+            k8s.core.v1.SecretArgs(
+              metadata = ObjectMetaArgs(
+                name = s"$appName-registry-secret",
+                namespace = appNamespace.metadata.name
+              ),
+              `type` = "kubernetes.io/dockerconfigjson",
+              data = Map(
+                ".dockerconfigjson" ->
+                  p"""{
+                     |            "auths": {
+                     |                "$repositoryUrl": {
+                     |                    "username": "$accessKeyId",
+                     |                    "password": "$secretAccessKey",
+                     |                    "auth": "${p"$accessKeyId:$secretAccessKey".map(base64)}"
+                     |                }
+                     |            }
+                     |}""".stripMargin.map(base64)
+              )
+            ),
+            opts = opts(provider = k8sProvider, dependsOn = image)
+          )
+        yield (Some(k8sRegistry), tag.targetImage)
+      case str =>
+        throw Exception(
+          s"$str value not allowed. Available values are local or remote. Change vss:cluster configuration"
+        )
+
+  val k8sRegistrySecret = out.map(_._1)
+  val image             = out.flatMap(_._2)
+
   // loki
   val lokiDeployment = Loki.deploy(appNamespace, k8sProvider)
   val lokiService    = Loki.deployService(appNamespace, lokiDeployment, k8sProvider)
@@ -74,8 +150,9 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
   val jaegerService    = Jaeger.deployService(appNamespace, jaegerDeployment, k8sProvider)
 
   // vss
-  val vssDeployment = VSS.deploy(config, appNamespace, postgresService, kafkaService, jaegerService, k8sProvider)
-  val vssService    = VSS.deployService(serviceType, appNamespace, vssDeployment, k8sProvider)
+  val vssDeployment =
+    VSS.deploy(k8sRegistrySecret, image, appNamespace, postgresService, kafkaService, jaegerService, k8sProvider)
+  val vssService = VSS.deployService(serviceType, appNamespace, vssDeployment, k8sProvider)
 
   val grafanaServiceUrl =
     grafanaService.status.loadBalancer.ingress
@@ -114,3 +191,5 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
     vssServiceName = vssService.metadata.name
   )
 }
+
+private def base64: String => String = v => java.util.Base64.getEncoder.encodeToString(v.getBytes)

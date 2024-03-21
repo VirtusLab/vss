@@ -21,18 +21,14 @@ object VSS {
   )
 
   def deploy(using Context)(
-    config: Config,
+    k8sRegistrySecret: Output[Option[k8s.core.v1.Secret]],
+    image: Output[String],
     namespace: Output[Namespace],
     postgresService: Output[Service],
     kafkaService: Output[Service],
     jaegerService: Output[Service],
     k8sProvider: Output[k8s.Provider]
   ) = {
-    val localRegistry = config.requireString("localRegistry")
-    val imageName     = config.requireString("imageName")
-    val imageTag      = config.requireString("imageTag")
-    val image         = pulumi"$localRegistry/$imageName:$imageTag"
-
     Deployment(
       appName,
       DeploymentArgs(
@@ -46,11 +42,13 @@ object VSS {
               namespace = namespace.metadata.name
             ),
             spec = PodSpecArgs(
+              imagePullSecrets =
+                k8sRegistrySecret.map(_.map(secret => LocalObjectReferenceArgs(name = secret.metadata.name)).toList),
               containers = List(
                 ContainerArgs(
                   name = appName,
                   image = image,
-                  imagePullPolicy = "IfNotPresent",
+                  imagePullPolicy = "Always",
                   ports = ports.map { case (name, (protocol, port)) =>
                     ContainerPortArgs(containerPort = port, protocol)
                   }.toList,

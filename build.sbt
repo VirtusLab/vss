@@ -137,6 +137,19 @@ def setupCommonDockerImageConfig(project: Project): Project =
   project
     .settings(
       dockerRepository := Some("localhost:5001"),
+      dockerBuildCommand := {
+        if (sys.props("os.arch") != "amd64") {
+          // use buildx with platform to build supported amd64 images on other CPU architectures
+          // this may require that you have first run 'docker buildx create' to set docker buildx up
+          dockerExecCommand.value ++ Seq(
+            "buildx",
+            "build",
+            "--platform=linux/amd64",
+            //"--platform=linux/arm64/v8",
+            "--load"
+          ) ++ dockerBuildOptions.value :+ "."
+        } else dockerBuildCommand.value
+      },
       dockerBaseImage := "eclipse-temurin:11.0.16.1_1-jdk-focal",
       Docker / aggregate := false,
       Compile / packageDoc / publishArtifact := false
