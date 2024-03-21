@@ -41,9 +41,9 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
         )
 
   val appNamespace = Namespace(
-    name = "default",
-    NamespaceArgs(metadata = ObjectMetaArgs(name = "default")),
-    opts = opts(provider = k8sProvider, retainOnDelete = true)
+    name = "vss",
+    NamespaceArgs(metadata = ObjectMetaArgs(name = "vss")),
+    opts = opts(provider = k8sProvider)
   )
 
   // loki

@@ -82,7 +82,7 @@ object Promtail:
     val serviceAccount = ServiceAccount(
       s"$appName-service-account",
       ServiceAccountArgs(
-        metadata = ObjectMetaArgs(name = s"$appName-service-account" /*, namespace = namespace.metadata.name*/ )
+        metadata = ObjectMetaArgs(name = s"$appName-service-account", namespace = namespace.metadata.name)
       ),
       opts(provider = k8sProvider)
     )
