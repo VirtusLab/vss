@@ -1,5 +1,4 @@
 import besom.*
-import besom.aliases.NonEmptyString
 import besom.api.kubernetes as k8s
 import k8s.apps.v1.inputs.*
 import k8s.apps.v1.{DaemonSet, DaemonSetArgs, Deployment, DeploymentArgs}
@@ -8,9 +7,6 @@ import k8s.core.v1.{ConfigMapArgs, ServiceAccountArgs, *}
 import k8s.meta.v1.inputs.*
 import k8s.rbac.v1.inputs.{PolicyRuleArgs, RoleRefArgs, SubjectArgs}
 import k8s.rbac.v1.{ClusterRole, ClusterRoleArgs, ClusterRoleBinding, ClusterRoleBindingArgs}
-import besom.internal.{Context, Output}
-import besom.util.NonEmptyString
-import besom.aliases.NonEmptyString
 
 object Promtail:
   val appName: NonEmptyString = "promtail"
