@@ -1,4 +1,3 @@
-import VSS.appName
 import besom.*
 import besom.api.{docker, kubernetes as k8s}
 import besom.api.kubernetes.meta.v1.inputs.ObjectMetaArgs
@@ -8,116 +7,107 @@ import k8s.core.v1.{Namespace, NamespaceArgs, Service, ServiceAccount, ServiceAc
 import k8s.core.v1.enums.ServiceSpecType
 import besom.internal.{Config, Output}
 import besom.json.DefaultJsonProtocol.StringJsonFormat
+import besom.json.{JsField, JsObject, JsString, JsValue, JsonReader}
 
 @main def main = Pulumi.run {
-
-  val serviceType = config
+  val appName: NonEmptyString = "vss"
+  val clusterConfig = config
     .requireString("cluster")
-    .map:
-      case "remote" =>
-        ServiceSpecType.LoadBalancer
-      case _ =>
-        ServiceSpecType.ClusterIP
+    .map(Cluster.parseName)
 
-  val k8sProvider = config
-    .requireString("cluster")
-    .flatMap:
-      case "local" =>
-        k8s.Provider(name = "vss-local-provider")
-      case "remote" =>
-        for
-          k8sOrgName     <- config.getString("cluster-org").getOrElse("organization")
-          k8sProjName    <- config.requireString("cluster-project")
-          k8sStackName   <- config.requireString("cluster-stack")
-          stack          <- StackReference(name = s"$k8sOrgName/$k8sProjName/$k8sStackName")
-          kubeconfigJson <- stack.requireOutput("kubeconfig")
-          provider <- k8s.Provider(
-            name = "vss-remote-provider",
-            k8s.ProviderArgs(kubeconfig = kubeconfigJson.convertTo[String])
-          )
-        yield provider
-      case str =>
-        throw Exception(
-          s"$str value not allowed. Available values are local or remote. Change vss:cluster configuration"
-        )
+  val serviceType = clusterConfig.map:
+    case Cluster.Remote =>
+      ServiceSpecType.LoadBalancer
+    case _ =>
+      ServiceSpecType.ClusterIP
+
+  val clusterStack =
+    for
+      orgName   <- config.getString("cluster-org").getOrElse("organization")
+      projName  <- config.requireString("cluster-project")
+      stackName <- config.requireString("cluster-stack")
+      stack     <- StackReference(name = s"$orgName/$projName/$stackName")
+    yield stack
+
+  val k8sProvider = clusterConfig.flatMap:
+    case Cluster.Local =>
+      k8s.Provider(name = s"$appName-local-provider")
+    case Cluster.Remote =>
+      k8s.Provider(
+        name = s"$appName-remote-provider",
+        k8s.ProviderArgs(kubeconfig = clusterStack.requireOutput("kubeconfig").convertTo[String])
+      )
 
   val appNamespace = Namespace(
-    name = "vss",
-    NamespaceArgs(metadata = ObjectMetaArgs(name = "vss")),
+    name = appName,
+    NamespaceArgs(metadata = ObjectMetaArgs(name = appName)),
     opts = opts(provider = k8sProvider)
   )
 
   val imageTag        = config.requireString("imageTag")
   val localRepository = config.requireString("localRepository")
 
-  val out = config
-    .requireString("cluster")
-    .flatMap:
-      case "local" =>
-        Output(None, p"$localRepository:$imageTag")
-      case "remote" =>
-        for
-          k8sOrgName       <- config.getString("cluster-org").getOrElse("organization")
-          k8sProjName      <- config.requireString("cluster-project")
-          k8sStackName     <- config.requireString("cluster-stack")
-          stack            <- StackReference(name = s"$k8sOrgName/$k8sProjName/$k8sStackName")
-          registryEndpoint <- stack.requireOutput("registryEndpoint").map(_.convertTo[String])
-          repositoryUrl    <- stack.requireOutput("repositoryUrl").map(_.convertTo[String])
-          secretAccessKey  <- stack.requireOutput("secretAccessKey").map(_.convertTo[String])
-          accessKeyId      <- stack.requireOutput("accessKeyId").map(_.convertTo[String])
-          dockerProvider <- docker.Provider(
-            s"$appName-docker-provider",
-            docker.ProviderArgs(
-              registryAuth = List(
-                docker.inputs.ProviderRegistryAuthArgs(
-                  address = registryEndpoint,
-                  username = accessKeyId,
-                  password = secretAccessKey
-                )
+  val registryEndpoint       = clusterStack.requireOutput("registryEndpoint").convertTo[String]
+  val repositoryUrl          = clusterStack.requireOutput("repositoryUrl").convertTo[String]
+  val secretAccessKeyJsValue = clusterStack.requireOutput("secretAccessKey")
+  val accessKeyIdJsValue     = clusterStack.requireOutput("accessKeyId")
+  val secretAccessKey        = secretAccessKeyJsValue.convertTo[String]
+  val accessKeyId            = accessKeyIdJsValue.convertTo[String]
+
+  val out = clusterConfig.flatMap:
+    case Cluster.Local =>
+      Output(None, p"$localRepository:$imageTag")
+    case Cluster.Remote =>
+      for
+        dockerProvider <- docker.Provider(
+          name = s"$appName-docker-provider",
+          docker.ProviderArgs(
+            registryAuth = List(
+              docker.inputs.ProviderRegistryAuthArgs(
+                address = registryEndpoint,
+                username = accessKeyId,
+                password = secretAccessKey
               )
             )
           )
-          tag <- docker.Tag(
-            s"$appName-tag",
-            docker.TagArgs(
-              sourceImage = p"$localRepository:$imageTag",
-              targetImage = p"$repositoryUrl:$imageTag"
-            ),
-            opts = opts(provider = dockerProvider)
-          )
-          image <- docker.RegistryImage(
-            s"$appName-image",
-            docker.RegistryImageArgs(name = tag.targetImage),
-            opts = opts(provider = dockerProvider)
-          )
-          k8sRegistry <- k8s.core.v1.Secret(
-            s"$appName-registry-secret",
-            k8s.core.v1.SecretArgs(
-              metadata = ObjectMetaArgs(
-                name = s"$appName-registry-secret",
-                namespace = appNamespace.metadata.name
-              ),
-              `type` = "kubernetes.io/dockerconfigjson",
-              data = Map(
-                ".dockerconfigjson" ->
-                  p"""{
-                     |            "auths": {
-                     |                "$repositoryUrl": {
-                     |                    "username": "$accessKeyId",
-                     |                    "password": "$secretAccessKey",
-                     |                    "auth": "${p"$accessKeyId:$secretAccessKey".map(base64)}"
-                     |                }
-                     |            }
-                     |}""".stripMargin.map(base64)
-              )
-            ),
-            opts = opts(provider = k8sProvider, dependsOn = image)
-          )
-        yield (Some(k8sRegistry), tag.targetImage)
-      case str =>
-        throw Exception(
-          s"$str value not allowed. Available values are local or remote. Change vss:cluster configuration"
         )
+        tag <- docker.Tag(
+          s"$appName-tag",
+          docker.TagArgs(
+            sourceImage = p"$localRepository:$imageTag",
+            targetImage = p"$repositoryUrl:$imageTag"
+          ),
+          opts = opts(provider = dockerProvider)
+        )
+        image <- docker.RegistryImage(
+          s"$appName-image",
+          docker.RegistryImageArgs(name = tag.targetImage),
+          opts = opts(provider = dockerProvider)
+        )
+        k8sRegistry <- k8s.core.v1.Secret(
+          s"$appName-registry-secret",
+          k8s.core.v1.SecretArgs(
+            metadata = ObjectMetaArgs(
+              name = s"$appName-registry-secret",
+              namespace = appNamespace.metadata.name
+            ),
+            `type` = "kubernetes.io/dockerconfigjson",
+            stringData = Map(
+              ".dockerconfigjson" ->
+                jsObjectOutput(
+                  "auths" -> jsObjectOutput(
+                    repositoryUrl -> jsObjectOutput(
+                      "username" -> accessKeyIdJsValue,
+                      "password" -> secretAccessKeyJsValue,
+                      "auth" -> p"$accessKeyId:$secretAccessKey".map(base64).map(JsString(_))
+                    )
+                  )
+                ).prettyPrint
+            )
+          ),
+          opts = opts(provider = k8sProvider, dependsOn = image)
+        )
+      yield (Some(k8sRegistry), tag.targetImage)
 
   val k8sRegistrySecret = out.map(_._1)
   val image             = out.flatMap(_._2)
@@ -193,3 +183,28 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
 }
 
 private def base64: String => String = v => java.util.Base64.getEncoder.encodeToString(v.getBytes)
+
+private def jsObjectOutput(
+  members: (String | Output[String], JsValue | Output[JsValue])*
+)(using Context): Output[JsObject] =
+  Output
+    .sequence(
+      members.toSeq.map {
+        case (k: String, v: JsValue) =>
+          Output(k, v)
+        case (k: String, ov: Output[JsValue]) =>
+          ov.map(v => (k, v))
+        case (ok: Output[String], v: JsValue) =>
+          ok.map(k => (k, v))
+        case (ok: Output[String], ov: Output[JsValue]) =>
+          ok.zip(ov)
+      }
+    )
+    .map(o => JsObject.apply(o*))
+
+extension (o: Output[StackReference])
+  def requireOutput(name: NonEmptyString)(using Context): Output[JsValue] = o.flatMap(_.requireOutput(name))
+
+extension (o: Output[JsValue])
+  def convertTo[T : JsonReader]: Output[T] = o.map(_.convertTo[T])
+  def prettyPrint: Output[String]          = o.map(_.prettyPrint)
