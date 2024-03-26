@@ -1,15 +1,13 @@
 import besom.*
-import besom.util.*
 import besom.api.kubernetes as k8s
-import k8s.core.v1.inputs.*
-import k8s.core.v1.{ConfigMap, ConfigMapArgs, Namespace, Service, ServiceArgs}
-import k8s.apps.v1.inputs.*
-import k8s.apps.v1.{Deployment, DeploymentArgs}
-import k8s.meta.v1.inputs.*
-import besom.internal.{Context, Output}
-import besom.internal.Config
+import besom.api.kubernetes.apps.v1.inputs.*
+import besom.api.kubernetes.apps.v1.{Deployment, DeploymentArgs}
+import besom.api.kubernetes.core.v1.enums.ServiceSpecType
+import besom.api.kubernetes.core.v1.inputs.*
+import besom.api.kubernetes.core.v1.{Namespace, Service, ServiceArgs}
+import besom.api.kubernetes.meta.v1.inputs.*
 
-object VSS {
+object VSS:
   val appName: NonEmptyString = "vss-app" // todo fix inference in NonEmptyString
   val labels                  = Map("app" -> "vss-app")
   val ports = Map(
@@ -20,17 +18,14 @@ object VSS {
   )
 
   def deploy(using Context)(
-    config: Config,
+    k8sRegistrySecret: Output[Option[k8s.core.v1.Secret]],
+    image: Output[String],
     namespace: Output[Namespace],
     postgresService: Output[Service],
     kafkaService: Output[Service],
-    jaegerService: Output[Service]
+    jaegerService: Output[Service],
+    k8sProvider: Output[k8s.Provider]
   ) = {
-    val localRegistry = config.requireString("localRegistry")
-    val imageName     = config.requireString("imageName")
-    val imageTag      = config.requireString("imageTag")
-    val image         = pulumi"$localRegistry/$imageName:$imageTag"
-
     Deployment(
       appName,
       DeploymentArgs(
@@ -44,11 +39,13 @@ object VSS {
               namespace = namespace.metadata.name
             ),
             spec = PodSpecArgs(
+              imagePullSecrets =
+                k8sRegistrySecret.map(_.map(secret => LocalObjectReferenceArgs(name = secret.metadata.name)).toList),
               containers = List(
                 ContainerArgs(
                   name = appName,
                   image = image,
-                  imagePullPolicy = "IfNotPresent",
+                  imagePullPolicy = "Always",
                   ports = ports.map { case (name, (protocol, port)) =>
                     ContainerPortArgs(containerPort = port, protocol)
                   }.toList,
@@ -74,24 +71,38 @@ object VSS {
           name = s"$appName-deployment",
           namespace = namespace.metadata.name
         )
-      )
+      ),
+      opts(provider = k8sProvider)
     )
   }
 
-  def deployService(using Context)(namespace: Output[Namespace]) = Service(
-    appName,
-    ServiceArgs(
-      spec = ServiceSpecArgs(
-        selector = labels,
-        ports = ports.map { case (name, (protocol, port)) =>
-          ServicePortArgs(name = name, port = port, targetPort = port, protocol = protocol)
-        }.toList
+  def deployService(using Context)(
+    serviceType: Output[ServiceSpecType],
+    namespace: Output[Namespace],
+    vssDeployment: Output[Deployment],
+    k8sProvider: Output[k8s.Provider]
+  ) =
+    val service = Service(
+      appName,
+      ServiceArgs(
+        spec = ServiceSpecArgs(
+          `type` = serviceType,
+          selector = labels,
+          ports = ports.map { case (name, (protocol, port)) =>
+            ServicePortArgs(name = name, port = port, targetPort = port, protocol = protocol)
+          }.toList
+        ),
+        metadata = ObjectMetaArgs(
+          name = s"$appName-service",
+          namespace = namespace.metadata.name
+        )
       ),
-      metadata = ObjectMetaArgs(
-        name = s"$appName-service",
-        namespace = namespace.metadata.name
-      )
+      opts(dependsOn = vssDeployment, provider = k8sProvider)
     )
-  )
 
-}
+    service.status.loadBalancer.ingress
+      .map(
+        _.flatMap(_.headOption.flatMap(_.hostname))
+          .getOrElse(p"localhost")
+      )
+      .flatMap(host => p"http://$host:${ports("main-http")._2}/docs")

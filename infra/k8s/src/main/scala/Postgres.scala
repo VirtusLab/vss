@@ -14,18 +14,20 @@ object Postgres {
   val labels                  = Map("app" -> "postgres")
   val port                    = 5432
 
-  def deploy(using Context)(namespace: Output[Namespace]) = {
+  def deploy(using Context)(namespace: Output[Namespace], k8sProvider: Output[k8s.Provider]) = {
 
     val postgresPV = PersistentVolume(
       appName,
       k8s.core.v1.PersistentVolumeArgs(
         metadata = ObjectMetaArgs(name = s"$appName-pv", namespace = namespace.metadata.name),
         spec = PersistentVolumeSpecArgs(
+          storageClassName = "standard",
           capacity = Map("storage" -> "8Gi"),
           accessModes = List("ReadWriteMany"),
           hostPath = HostPathVolumeSourceArgs("/data/db")
         )
-      )
+      ),
+      opts(provider = k8sProvider)
     )
 
     val postgresPVC = PersistentVolumeClaim(
@@ -33,12 +35,15 @@ object Postgres {
       k8s.core.v1.PersistentVolumeClaimArgs(
         metadata = ObjectMetaArgs(name = s"$appName-pvc", namespace = namespace.metadata.name),
         spec = PersistentVolumeClaimSpecArgs(
+          storageClassName = "standard",
+          volumeName = postgresPV.metadata.name,
           accessModes = List("ReadWriteMany"),
           resources = VolumeResourceRequirementsArgs(
             requests = Map("storage" -> "8Gi")
           )
         )
-      )
+      ),
+      opts(provider = k8sProvider)
     )
 
     val postgresConfigMap = ConfigMap(
@@ -51,7 +56,8 @@ object Postgres {
           "POSTGRES_USER" -> "postgres",
           "POSTGRES_PASSWORD" -> "postgres"
         )
-      )
+      ),
+      opts(provider = k8sProvider)
     )
 
     val initConfigMap = ConfigMap(
@@ -59,8 +65,9 @@ object Postgres {
       ConfigMapArgs(
         metadata = ObjectMetaArgs(name = s"$appName-init-config-map", namespace = namespace.metadata.name),
         // path starts from  besom/.scala-build
-        data = Ops.readFileIntoConfigMap("../commons/src/main/resources/tables.sql", Some("init.sql"))
-      )
+        data = Ops.readFileIntoConfigMap("../../commons/src/main/resources/tables.sql", Some("init.sql"))
+      ),
+      opts(provider = k8sProvider)
     )
 
     Deployment(
@@ -120,11 +127,14 @@ object Postgres {
           name = s"$appName-deployment",
           namespace = namespace.metadata.name
         )
-      )
+      ),
+      opts(provider = k8sProvider)
     )
   }
 
-  def deployService(using Context)(namespace: Output[Namespace]) = Service(
+  def deployService(using
+    Context
+  )(namespace: Output[Namespace], postgresDeployment: Output[Deployment], k8sProvider: Output[k8s.Provider]) = Service(
     appName,
     ServiceArgs(
       spec = ServiceSpecArgs(
@@ -137,6 +147,7 @@ object Postgres {
         name = s"$appName-service",
         namespace = namespace.metadata.name
       )
-    )
+    ),
+    opts(dependsOn = postgresDeployment, provider = k8sProvider)
   )
 }

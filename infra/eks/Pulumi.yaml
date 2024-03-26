@@ -1,0 +1,5 @@
+name: vss-aws-eks
+runtime: scala
+description: VSS AWS EKS infra
+config:
+  aws:region: us-west-2
