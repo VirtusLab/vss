@@ -144,15 +144,7 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
   // vss
   val vssDeployment =
     VSS.deploy(appImagePullSecret, appImage, appNamespace, postgresService, kafkaService, jaegerService, k8sProvider)
-  val vssService = VSS.deployService(serviceType, appNamespace, vssDeployment, k8sProvider)
-
-  val vssServiceUrl =
-    vssService.status.loadBalancer.ingress
-      .map(
-        _.flatMap(_.headOption.flatMap(_.hostname))
-          .getOrElse(p"localhost")
-      )
-      .flatMap(host => p"http://$host:${VSS.ports("main-http")._2}/docs")
+  val vssServiceUrl = VSS.deployService(serviceType, appNamespace, vssDeployment, k8sProvider)
 
   Stack.exports(
     grafanaServiceUrl = grafanaServiceUrl,
@@ -170,8 +162,7 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
     postgresServiceName = postgresService.metadata.name,
     jaegerDeploymentName = jaegerDeployment.metadata.name,
     jaegerServiceName = jaegerService.metadata.name,
-    vssDeploymentName = vssDeployment.metadata.name,
-    vssServiceName = vssService.metadata.name
+    vssDeploymentName = vssDeployment.metadata.name
   )
 }
 

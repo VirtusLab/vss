@@ -7,7 +7,7 @@ import besom.api.kubernetes.core.v1.inputs.*
 import besom.api.kubernetes.core.v1.{Namespace, Service, ServiceArgs}
 import besom.api.kubernetes.meta.v1.inputs.*
 
-object VSS {
+object VSS:
   val appName: NonEmptyString = "vss-app" // todo fix inference in NonEmptyString
   val labels                  = Map("app" -> "vss-app")
   val ports = Map(
@@ -81,22 +81,28 @@ object VSS {
     namespace: Output[Namespace],
     vssDeployment: Output[Deployment],
     k8sProvider: Output[k8s.Provider]
-  ) = Service(
-    appName,
-    ServiceArgs(
-      spec = ServiceSpecArgs(
-        `type` = serviceType,
-        selector = labels,
-        ports = ports.map { case (name, (protocol, port)) =>
-          ServicePortArgs(name = name, port = port, targetPort = port, protocol = protocol)
-        }.toList
+  ) =
+    val service = Service(
+      appName,
+      ServiceArgs(
+        spec = ServiceSpecArgs(
+          `type` = serviceType,
+          selector = labels,
+          ports = ports.map { case (name, (protocol, port)) =>
+            ServicePortArgs(name = name, port = port, targetPort = port, protocol = protocol)
+          }.toList
+        ),
+        metadata = ObjectMetaArgs(
+          name = s"$appName-service",
+          namespace = namespace.metadata.name
+        )
       ),
-      metadata = ObjectMetaArgs(
-        name = s"$appName-service",
-        namespace = namespace.metadata.name
-      )
-    ),
-    opts(dependsOn = vssDeployment, provider = k8sProvider)
-  )
+      opts(dependsOn = vssDeployment, provider = k8sProvider)
+    )
 
-}
+    service.status.loadBalancer.ingress
+      .map(
+        _.flatMap(_.headOption.flatMap(_.hostname))
+          .getOrElse(p"localhost")
+      )
+      .flatMap(host => p"http://$host:${ports("main-http")._2}/docs")
