@@ -153,7 +153,7 @@ object Grafana:
       name = s"$appName-provider",
       grafana.ProviderArgs(
         retryWait = 20, // seconds
-        retries = 6,
+        retries = 8,
         auth = config.requireString("grafana:auth"),
         url = serviceUrl
       )

@@ -75,12 +75,13 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
         ),
         opts = opts(provider = dockerProvider)
       )
-      val image = docker.RegistryImage(
-        name = s"$appName-image",
-        docker.RegistryImageArgs(name = tag.targetImage),
-        opts = opts(provider = dockerProvider)
-      )
-      image.flatMap(_ => tag.targetImage)
+      docker
+        .RegistryImage(
+          name = s"$appName-image",
+          docker.RegistryImageArgs(name = tag.targetImage),
+          opts = opts(provider = dockerProvider)
+        )
+        .name
 
   val appImagePullSecret = clusterConfig.flatMap:
     case Cluster.Local =>
@@ -147,6 +148,7 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
   val vssServiceUrl = VSS.deployService(serviceType, appNamespace, vssDeployment, k8sProvider)
 
   Stack.exports(
+    appImage = appImage,
     grafanaServiceUrl = grafanaServiceUrl,
     vssServiceUrl = vssServiceUrl,
     namespaceName = appNamespace.metadata.name,
