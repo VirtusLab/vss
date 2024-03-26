@@ -8,3 +8,4 @@ config:
   vss:cluster-org: "organization"
   vss:cluster-project: "vss-aws-eks"
   vss:cluster-stack: "dev"
+  grafana:auth: "admin:admin"

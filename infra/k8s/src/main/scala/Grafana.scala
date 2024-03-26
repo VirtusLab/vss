@@ -1,5 +1,6 @@
 import besom.*
 import besom.api.kubernetes as k8s
+import besom.api.grafana
 import k8s.apps.v1.inputs.*
 import k8s.apps.v1.{Deployment, DeploymentArgs}
 import k8s.core.v1.inputs.*
@@ -114,25 +115,72 @@ object Grafana:
   def deployService(using
     Context
   )(
+    lokiUrl: Output[String],
+    jaegerUrl: Output[String],
     serviceType: Output[ServiceSpecType],
     namespace: Output[Namespace],
     grafanaDeployment: Output[Deployment],
     k8sProvider: Output[k8s.Provider]
-  ) = Service(
-    appName,
-    ServiceArgs(
-      spec = ServiceSpecArgs(
-        selector = labels,
-        sessionAffinity = "None",
-        `type` = serviceType,
-        ports = List(
-          ServicePortArgs(port = port, targetPort = port)
+  ) =
+    val service = Service(
+      appName,
+      ServiceArgs(
+        spec = ServiceSpecArgs(
+          selector = labels,
+          sessionAffinity = "None",
+          `type` = serviceType,
+          ports = List(
+            ServicePortArgs(port = port, targetPort = port)
+          )
+        ),
+        metadata = ObjectMetaArgs(
+          name = s"$appName-service",
+          namespace = namespace.metadata.name
         )
       ),
-      metadata = ObjectMetaArgs(
-        name = s"$appName-service",
-        namespace = namespace.metadata.name
+      opts(dependsOn = grafanaDeployment, provider = k8sProvider)
+    )
+
+    val serviceUrl =
+      service.status.loadBalancer.ingress
+        .map(
+          _.flatMap(_.headOption.flatMap(_.hostname))
+            .getOrElse(p"localhost")
+        )
+        .flatMap(host => p"http://$host:$port")
+
+    val grafanaProvider = grafana.Provider(
+      name = s"$appName-provider",
+      grafana.ProviderArgs(
+        retryWait = 20, // seconds
+        retries = 6,
+        auth = config.requireString("grafana:auth"),
+        url = serviceUrl
       )
-    ),
-    opts(dependsOn = grafanaDeployment, provider = k8sProvider)
-  )
+    )
+
+    val lokiDataSource = grafana.DataSource(
+      name = s"$appName-loki-data-source",
+      grafana.DataSourceArgs(
+        url = lokiUrl,
+        `type` = "loki",
+        basicAuthEnabled = false,
+        isDefault = true
+      ),
+      opts = opts(provider = grafanaProvider, dependsOn = service)
+    )
+
+    val jaegerDataSource = grafana.DataSource(
+      name = s"$appName-jaeger-data-source",
+      grafana.DataSourceArgs(
+        url = jaegerUrl,
+        `type` = "jaeger",
+        basicAuthEnabled = false
+      ),
+      opts = opts(provider = grafanaProvider, dependsOn = service)
+    )
+    for
+      _ <- lokiDataSource
+      _ <- jaegerDataSource
+    yield serviceUrl
+  end deployService

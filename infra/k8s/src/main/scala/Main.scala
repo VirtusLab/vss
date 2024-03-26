@@ -114,13 +114,10 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
   // loki
   val lokiDeployment = Loki.deploy(appNamespace, k8sProvider)
   val lokiService    = Loki.deployService(appNamespace, lokiDeployment, k8sProvider)
+  val lokiUrl        = p"http://${lokiService.metadata.name.map(_.get)}:${Loki.port}"
 
   // promtail
-  val promtailDaemonSet = Promtail.deploy(lokiService, appNamespace, k8sProvider)
-
-  // grafana
-  val grafanaDeployment = Grafana.deploy(appNamespace, k8sProvider)
-  val grafanaService    = Grafana.deployService(serviceType, appNamespace, grafanaDeployment, k8sProvider)
+  val promtailDaemonSet = Promtail.deploy(lokiUrl, appNamespace, k8sProvider)
 
   // zookeeper
   val zooDeployment = Zookeeper.deploy(appNamespace, k8sProvider)
@@ -137,27 +134,25 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
   // jaeger
   val jaegerDeployment = Jaeger.deploy(appNamespace, k8sProvider)
   val jaegerService    = Jaeger.deployService(appNamespace, jaegerDeployment, k8sProvider)
+  val jaegerUrl        = p"http://${jaegerService.metadata.name.map(_.get)}:${Jaeger.ports("frontend")._2}"
+
+  // grafana
+  val grafanaDeployment = Grafana.deploy(appNamespace, k8sProvider)
+  val grafanaServiceUrl =
+    Grafana.deployService(lokiUrl, jaegerUrl, serviceType, appNamespace, grafanaDeployment, k8sProvider)
 
   // vss
   val vssDeployment =
     VSS.deploy(appImagePullSecret, appImage, appNamespace, postgresService, kafkaService, jaegerService, k8sProvider)
   val vssService = VSS.deployService(serviceType, appNamespace, vssDeployment, k8sProvider)
 
-  val grafanaServiceUrl =
-    grafanaService.status.loadBalancer.ingress
-      .map(
-        _.flatMap(_.headOption.flatMap(_.hostname))
-          .map(host => p"http://$host:${Grafana.port}")
-          .getOrElse("Host not find. Probably vss:cluster is set to local")
-      )
-
   val vssServiceUrl =
     vssService.status.loadBalancer.ingress
       .map(
         _.flatMap(_.headOption.flatMap(_.hostname))
-          .map(host => p"http://$host:${VSS.ports("main-http")._2}/docs")
-          .getOrElse("Host not find. Probably vss:cluster is set to local")
+          .getOrElse(p"localhost")
       )
+      .flatMap(host => p"http://$host:${VSS.ports("main-http")._2}/docs")
 
   Stack.exports(
     grafanaServiceUrl = grafanaServiceUrl,
@@ -166,7 +161,6 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
     lokiDeploymentName = lokiDeployment.metadata.name,
     lokiServiceName = lokiService.metadata.name,
     grafanaDeploymentName = grafanaDeployment.metadata.name,
-    grafanaServiceName = grafanaService.metadata.name,
     promtailDaemonSetName = promtailDaemonSet.metadata.name,
     zookeeperDeploymentName = zooDeployment.metadata.name,
     zookeeperServiceName = zooService.metadata.name,

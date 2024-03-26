@@ -16,7 +16,7 @@ object Promtail:
 
   def deploy(using
     Context
-  )(lokiService: Output[Service], namespace: Output[Namespace], k8sProvider: Output[k8s.Provider]) =
+  )(lokiUrl: Output[String], namespace: Output[Namespace], k8sProvider: Output[k8s.Provider]) =
     val configMap = ConfigMap(
       s"$appName-config",
       ConfigMapArgs(
@@ -27,7 +27,7 @@ object Promtail:
                |  http_listen_port: $port
                |  grpc_listen_port: 0
                |clients:
-               |- url: http://${lokiService.metadata.name.map(_.get)}:3100/loki/api/v1/push
+               |- url: $lokiUrl/loki/api/v1/push
                |positions:
                |  filename: /tmp/positions.yaml
                |target_config:
