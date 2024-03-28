@@ -154,9 +154,10 @@ object Grafana:
       grafana.ProviderArgs(
         retryWait = 20, // seconds
         retries = 8,
-        auth = config.requireString("grafana:auth"),
-        url = serviceUrl
-      )
+        url = serviceUrl,
+        auth = config.requireString("grafana:auth"), //grafana.config.getAuth
+      ),
+      opts = opts(dependsOn = grafanaDeployment, deletedWith = grafanaDeployment)
     )
 
     val lokiDataSource = grafana.DataSource(
@@ -167,7 +168,7 @@ object Grafana:
         basicAuthEnabled = false,
         isDefault = true
       ),
-      opts = opts(provider = grafanaProvider, dependsOn = service)
+      opts = opts(provider = grafanaProvider, dependsOn = service, deletedWith = grafanaDeployment)
     )
 
     val jaegerDataSource = grafana.DataSource(
@@ -175,9 +176,10 @@ object Grafana:
       grafana.DataSourceArgs(
         url = jaegerUrl,
         `type` = "jaeger",
-        basicAuthEnabled = false
+        basicAuthEnabled = false,
+        isDefault = false
       ),
-      opts = opts(provider = grafanaProvider, dependsOn = service)
+      opts = opts(provider = grafanaProvider, dependsOn = service, deletedWith = grafanaDeployment)
     )
     for
       _ <- lokiDataSource

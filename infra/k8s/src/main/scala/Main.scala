@@ -20,9 +20,9 @@ import besom.json.DefaultJsonProtocol.StringJsonFormat
 
   val clusterStack =
     for
-      orgName   <- config.getString("cluster-org").getOrElse("organization")
-      projName  <- config.requireString("cluster-project")
-      stackName <- config.requireString("cluster-stack")
+      orgName   <- config.getString("clusterOrg").getOrElse("organization")
+      projName  <- config.requireString("clusterProject")
+      stackName <- config.requireString("clusterStack")
       stack     <- StackReference(name = s"$orgName/$projName/$stackName")
     yield stack
 
